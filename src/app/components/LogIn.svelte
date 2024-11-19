@@ -47,7 +47,7 @@
     } else {
       pushToast({
         theme: "error",
-        message: "Something went wrong! Please try again.",
+        message: "Something went wrong! Please try again."
       })
     }
   })
@@ -61,7 +61,7 @@
     } else {
       pushToast({
         theme: "error",
-        message: "Something went wrong! Please try again.",
+        message: "Something went wrong! Please try again."
       })
     }
   })
@@ -87,7 +87,8 @@
   <h1 class="heading">Log in with Nostr</h1>
   <p class="m-auto max-w-sm text-center">
     {PLATFORM_NAME} is built using the
-    <Button class="link" on:click={() => pushModal(InfoNostr)}>nostr protocol</Button>, which allows
+    <Button class="link" on:click={() => pushModal(InfoNostr)}>nostr protocol</Button>
+    , which allows
     you to own your social identity.
   </p>
   {#if getNip07()}
@@ -99,34 +100,39 @@
       {/if}
       Log in with Extension
     </Button>
+  {:else }
+    <p>
+      To be part of this pre-alfa test you need to download and configure the nos2x extension, you can do it
+      <Link class="link" external href="https://chromewebstore.google.com/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp">here</Link>
+    </p>
   {/if}
-  {#each signers as app}
-    <Button disabled={loading} class="btn btn-primary" on:click={() => loginWithSigner(app)}>
-      {#if loading}
-        <span class="loading loading-spinner mr-3" />
-      {:else}
-        <img src={app.iconUrl} alt={app.name} width="20" height="20" />
-      {/if}
-      Log in with {app.name}
-    </Button>
-  {/each}
-  <Button
-    disabled={loading}
-    on:click={loginWithBunker}
-    class="btn {hasNativeSigner ? 'btn-neutral' : 'btn-primary'}">
-    <Icon icon="cpu" />
-    Log in with Remote Signer
-  </Button>
-  <Link
-    external
-    disabled={loading}
-    href="https://nostrapps.com#signers"
-    class="btn {hasNativeSigner ? '' : 'btn-neutral'}">
-    <Icon icon="compass" />
-    Browse Signer Apps
-  </Link>
-  <div class="text-sm">
-    Need an account?
-    <Button class="link" on:click={signUp}>Register instead</Button>
-  </div>
+  <!--{#each signers as app}-->
+  <!--  <Button disabled={loading} class="btn btn-primary" on:click={() => loginWithSigner(app)}>-->
+  <!--    {#if loading}-->
+  <!--      <span class="loading loading-spinner mr-3" />-->
+  <!--    {:else}-->
+  <!--      <img src={app.iconUrl} alt={app.name} width="20" height="20" />-->
+  <!--    {/if}-->
+  <!--    Log in with {app.name}-->
+  <!--  </Button>-->
+  <!--{/each}-->
+  <!--<Button-->
+  <!--  disabled={loading}-->
+  <!--  on:click={loginWithBunker}-->
+  <!--  class="btn {hasNativeSigner ? 'btn-neutral' : 'btn-primary'}">-->
+  <!--  <Icon icon="cpu" />-->
+  <!--  Log in with Remote Signer-->
+  <!--</Button>-->
+  <!--<Link-->
+  <!--  external-->
+  <!--  disabled={loading}-->
+  <!--  href="https://nostrapps.com#signers"-->
+  <!--  class="btn {hasNativeSigner ? '' : 'btn-neutral'}">-->
+  <!--  <Icon icon="compass" />-->
+  <!--  Browse Signer Apps-->
+  <!--</Link>-->
+  <!--<div class="text-sm">-->
+  <!--  Need an account?-->
+  <!--  <Button class="link" on:click={signUp}>Register instead</Button>-->
+  <!--</div>-->
 </div>

@@ -26,7 +26,7 @@
 
 <form class="column gap-4" on:submit|preventDefault={logout}>
   <ModalHeader>
-    <div slot="title">Are you sure you want<br />to log out?</div>
+    <div slot="title">Are you sure you want to ZOOL!<br />to log out?</div>
   </ModalHeader>
   <p class="text-center">Your local database will be cleared.</p>
   <ModalFooter>

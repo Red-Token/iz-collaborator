@@ -14,6 +14,7 @@
   import {checkRelayConnection, checkRelayAuth, checkRelayAccess} from "@app/commands"
   import {decodeRelay, MEMBERSHIPS} from "@app/state"
   import {deriveNotification, SPACE_FILTERS} from "@app/notifications"
+  import RightNav from "@lib/components/rm/RightNav.svelte"
 
   const url = decodeRelay($page.params.relay)
 
@@ -62,3 +63,7 @@
 <Page>
   <slot />
 </Page>
+<RightNav>
+  Zool is cool!
+</RightNav>
+
