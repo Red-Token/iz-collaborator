@@ -4,57 +4,55 @@
 
   let tree_data = [
     {
-      "name": "Group",
-      "selected": true,
-      "children": [
+      name: "Group",
+      selected: true,
+      children: [
         {
-          "name": "Sub Group",
-          "children": [
+          name: "Sub Group",
+          children: [
             {
-              "name": "Item 1.1.1"
+              name: "Item 1.1.1",
             },
             {
-              "name": "Item 1.1.2"
-            }
-          ]
+              name: "Item 1.1.2",
+            },
+          ],
         },
         {
-          "name": "Group"
-        }
-      ]
+          name: "Group",
+        },
+      ],
     },
     {
-      "name": "Item 2",
-      "children": [
+      name: "Item 2",
+      children: [
         {
-          "name": "Item 2.1"
+          name: "Item 2.1",
         },
         {
-          "name": "Item 2.2"
-        }
-      ]
+          name: "Item 2.2",
+        },
+      ],
     },
     {
-      "name": "Item 3"
-    }
+      name: "Item 3",
+    },
   ]
 
   function onClick() {
     tree_data.push({
-        "name": "Item 4"
-      }
-    )
+      name: "Item 4",
+    })
 
     tree_data = tree_data
   }
-
 </script>
 
 <div>
   Hello World2!
   <Button class="btn btn-primary" on:click={onClick}>HULU</Button>
-  <TreeView tree_data="{tree_data}" let:item>
-    <div class="flex w-full group border-b border-b-blue-700 py-2">
+  <TreeView {tree_data} let:item>
+    <div class="group flex w-full border-b border-b-blue-700 py-2">
       {#if item.children}
         <div class="grow">
           📁 {item.name}

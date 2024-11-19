@@ -63,7 +63,4 @@
 <Page>
   <slot />
 </Page>
-<RightNav>
-  Zool is cool!
-</RightNav>
-
+<RightNav>Zool is cool!</RightNav>
