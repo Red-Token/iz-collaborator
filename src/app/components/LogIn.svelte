@@ -46,7 +46,7 @@
     } else {
       pushToast({
         theme: "error",
-        message: "Something went wrong! Please try again."
+        message: "Something went wrong! Please try again.",
       })
     }
   })
@@ -97,10 +97,15 @@
       {/if}
       Log in with Extension
     </Button>
-  {:else }
+  {:else}
     <p>
-      To be part of this pre-alfa test you need to download and configure the nos2x extension, you can do it
-      <Link class="link" external href="https://chromewebstore.google.com/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp">here</Link>
+      To be part of this pre-alfa test you need to download and configure the nos2x extension, you
+      can do it
+      <Link
+        class="link"
+        external
+        href="https://chromewebstore.google.com/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp"
+        >here</Link>
     </p>
   {/if}
   <!--{#each signers as app}-->
