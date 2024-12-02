@@ -30,7 +30,7 @@
   <Content {event} expandMode="inline" />
   <div class="flex w-full justify-between gap-2">
     <ReactionSummary relays={[url]} {event} {onReactionClick}>
-      <EmojiButton {onEmoji} class="btn btn-neutral btn-xs h-[26px] rounded-box">
+      <EmojiButton {onEmoji} class="btn btn-neutral btn-xs rounded-box h-[26px]">
         <Icon icon="smile-circle" size={4} />
       </EmojiButton>
     </ReactionSummary>

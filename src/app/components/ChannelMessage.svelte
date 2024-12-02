@@ -73,7 +73,7 @@
   <div class="flex w-full gap-3 overflow-auto">
     {#if showPubkey}
       <Link external href={pubkeyLink(event.pubkey)} class="flex items-start">
-        <Avatar src={$profile?.picture} class="border border-solid border-base-content" size={10} />
+        <Avatar src={$profile?.picture} class="border-base-content border border-solid" size={10} />
       </Link>
     {:else}
       <div class="w-10 min-w-10 max-w-10" />
@@ -106,7 +106,7 @@
     <ReactionSummary relays={[url]} {event} {onReactionClick} />
   </div>
   <button
-    class="join absolute right-1 top-1 border border-solid border-neutral text-xs opacity-0 transition-all"
+    class="join border-neutral absolute right-1 top-1 border border-solid text-xs opacity-0 transition-all"
     class:group-hover:opacity-100={!isMobile}
     on:click|stopPropagation>
     <ChannelMessageEmojiButton {url} {room} {event} />

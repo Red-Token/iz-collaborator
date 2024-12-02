@@ -1,9 +1,9 @@
-import dotenv from "dotenv"
+// import dotenv from "dotenv"
 import daisyui from "daisyui"
 import themes from "daisyui/src/theming/themes"
 
-dotenv.config({path: ".env.local"})
-dotenv.config({path: ".env"})
+// dotenv.config({path: ".env.local"})
+// dotenv.config({path: ".env"})
 
 /** @type {import('tailwindcss').Config} */
 export default {

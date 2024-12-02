@@ -30,7 +30,7 @@
   }
 </script>
 
-<ul class="menu whitespace-nowrap rounded-box bg-base-100 p-2 shadow-xl">
+<ul class="menu rounded-box bg-base-100 whitespace-nowrap p-2 shadow-xl">
   {#if isRoot}
     <li>
       <Button on:click={share}>

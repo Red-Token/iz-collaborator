@@ -9,7 +9,7 @@
   import Button from "@lib/components/Button.svelte"
   // import SignUp from "@app/components/SignUp.svelte"
   import InfoNostr from "@app/components/InfoNostr.svelte"
-  // import LogInBunker from "@app/components/LogInBunker.svelte"
+  import LogInBunker from "@app/components/LogInBunker.svelte"
   import {clearModals, pushModal} from "@app/modal"
   import {PLATFORM_NAME} from "@app/state"
   import {pushToast} from "@app/toast"
@@ -65,7 +65,7 @@
   //   }
   // })
 
-  // const loginWithBunker = () => pushModal(LogInBunker)
+  const loginWithBunker = () => pushModal(LogInBunker)
 
   let loading = false
   // let signers: any[] = []
@@ -118,13 +118,12 @@
   <!--    Log in with {app.name}-->
   <!--  </Button>-->
   <!--{/each}-->
-  <!--<Button-->
-  <!--  disabled={loading}-->
-  <!--  on:click={loginWithBunker}-->
-  <!--  class="btn {hasNativeSigner ? 'btn-neutral' : 'btn-primary'}">-->
-  <!--  <Icon icon="cpu" />-->
-  <!--  Log in with Remote Signer-->
-  <!--</Button>-->
+  <Button disabled={loading} on:click={loginWithBunker} class="btn {'btn-neutral'}">
+    <!--    class="btn {hasNativeSigner ? 'btn-neutral' : 'btn-primary'}">-->
+
+    <Icon icon="cpu" />
+    Log in with Remote Signer
+  </Button>
   <!--<Link-->
   <!--  external-->
   <!--  disabled={loading}-->

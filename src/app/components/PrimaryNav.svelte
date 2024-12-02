@@ -21,7 +21,7 @@
   const showSettingsMenu = () => pushModal(MenuSettings)
 </script>
 
-<div class="relative z-nav hidden w-14 flex-shrink-0 bg-base-200 pt-4 md:block">
+<div class="bg-base-200 relative z-nav hidden w-14 flex-shrink-0 pt-4 md:block">
   <div class="flex h-full flex-col justify-between">
     <div>
       {#if PLATFORM_RELAY}
@@ -67,7 +67,7 @@
 <slot />
 
 <div
-  class="border-top fixed bottom-0 left-0 right-0 z-nav h-14 border border-base-200 bg-base-100 md:hidden">
+  class="border-top border-base-200 bg-base-100 fixed bottom-0 left-0 right-0 z-nav h-14 border md:hidden">
   <div class="content-padding-x content-sizing flex justify-between px-2">
     <div class="flex gap-2 sm:gap-8">
       <PrimaryNavItem title="Search" href="/people">

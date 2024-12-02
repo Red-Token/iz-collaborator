@@ -59,7 +59,7 @@
   <ThunkStatus {thunk} class="mt-1" />
 {/if}
 <div
-  class="group chat flex items-center justify-end gap-1 px-2"
+  class="chat group flex items-center justify-end gap-1 px-2"
   class:chat-start={event.pubkey !== $pubkey}
   class:flex-row-reverse={event.pubkey !== $pubkey}
   class:chat-end={event.pubkey === $pubkey}>
@@ -94,7 +94,7 @@
           <Link external href={pubkeyLink(event.pubkey)} class="flex items-center gap-1">
             <Avatar
               src={$profile?.picture}
-              class="border border-solid border-base-content"
+              class="border-base-content border border-solid"
               size={4} />
             <div class="flex items-center gap-2">
               <Link

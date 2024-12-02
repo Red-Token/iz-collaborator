@@ -77,7 +77,8 @@ export const INDEXER_RELAYS = [
   "wss://relay.nostr.band/",
 ]
 
-export const SIGNER_RELAYS = ["wss://relay.nsec.app/", "wss://bucket.coracle.social/"]
+// export const SIGNER_RELAYS = ["wss://relay.nsec.app/", "wss://bucket.coracle.social/"]
+export const SIGNER_RELAYS = ["wss://relay.lxc/"]
 
 export const PLATFORM_URL = window.location.origin
 

@@ -6,7 +6,7 @@
   const pubkey = "97c70a44366a6535c145b333f973ea86dfdc2d7a99da618c40c64705ad98e322"
 </script>
 
-<div class="mt-8 min-h-screen bg-base-200 sm:hero">
+<div class="bg-base-200 sm:hero mt-8 min-h-screen">
   <div class="hero-content">
     <div class="column content gap-6">
       <p class="text-center text-2xl">Thanks for using</p>

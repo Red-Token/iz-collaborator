@@ -90,7 +90,7 @@
             <div class="relative">
               <div class="avatar relative">
                 <div
-                  class="center !flex h-12 w-12 min-w-12 rounded-full border-2 border-solid border-base-300 bg-base-300">
+                  class="center border-base-300 bg-base-300 !flex h-12 w-12 min-w-12 rounded-full border-2 border-solid">
                   {#if relay.profile?.icon}
                     <img alt="" src={relay.profile.icon} />
                   {:else}
@@ -100,7 +100,7 @@
               </div>
               {#if getMembershipUrls($userMembership).includes(relay.url)}
                 <div
-                  class="tooltip absolute -right-1 -top-1 h-5 w-5 rounded-full bg-primary"
+                  class="tooltip bg-primary absolute -right-1 -top-1 h-5 w-5 rounded-full"
                   data-tip="You are already a member of this space.">
                   <Icon icon="check-circle" class="scale-110" />
                 </div>

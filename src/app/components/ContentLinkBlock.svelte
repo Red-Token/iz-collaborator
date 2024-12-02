@@ -23,7 +23,7 @@
 </script>
 
 <Link external href={url} class="my-2 flex">
-  <div class="overflow-hidden rounded-box leading-[0]">
+  <div class="rounded-box overflow-hidden leading-[0]">
     {#if url.match(/\.(mov|webm|mp4)$/)}
       <video controls src={url} class="max-h-96 object-contain object-center">
         <track kind="captions" />

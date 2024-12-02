@@ -70,7 +70,7 @@
       </div>
       <div class="btn btn-neutral btn-xs relative hidden rounded-full sm:flex">
         {#if $notification}
-          <div class="h-2 w-2 rounded-full bg-primary" />
+          <div class="bg-primary h-2 w-2 rounded-full" />
         {/if}
         Active {formatTimestampRelative(lastActive)}
       </div>

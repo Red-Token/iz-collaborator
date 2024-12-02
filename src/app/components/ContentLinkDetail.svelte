@@ -8,5 +8,5 @@
 </script>
 
 <Button class="m-auto h-screen w-screen cursor-pointer p-4" on:click={back}>
-  <img alt="" src={imgproxy(url)} class="m-auto max-h-full max-w-full rounded-box" />
+  <img alt="" src={imgproxy(url)} class="rounded-box m-auto max-h-full max-w-full" />
 </Button>

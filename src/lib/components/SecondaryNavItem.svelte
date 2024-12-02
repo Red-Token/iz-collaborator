@@ -38,13 +38,13 @@
     on:click
     class={cx(
       $$props.class,
-      "relative flex items-center gap-3 text-left transition-all hover:bg-base-100 hover:text-base-content",
+      "hover:bg-base-100 hover:text-base-content relative flex items-center gap-3 text-left transition-all",
     )}
     class:text-base-content={active}
     class:bg-base-100={active}>
     <slot />
     {#if !active && notification}
-      <div class="absolute right-2 top-5 h-2 w-2 rounded-full bg-primary" transition:fade />
+      <div class="bg-primary absolute right-2 top-5 h-2 w-2 rounded-full" transition:fade />
     {/if}
   </a>
 {:else}
@@ -53,12 +53,12 @@
     on:click
     class={cx(
       $$props.class,
-      "relative flex w-full items-center gap-3 text-left transition-all hover:bg-base-100 hover:text-base-content",
+      "hover:bg-base-100 hover:text-base-content relative flex w-full items-center gap-3 text-left transition-all",
     )}
     class:text-base-content={active}
     class:bg-base-100={active}>
     {#if !active && notification}
-      <div class="absolute right-2 top-5 h-2 w-2 rounded-full bg-primary" transition:fade />
+      <div class="bg-primary absolute right-2 top-5 h-2 w-2 rounded-full" transition:fade />
     {/if}
     <slot />
   </button>

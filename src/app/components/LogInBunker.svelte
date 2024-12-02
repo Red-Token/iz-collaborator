@@ -1,6 +1,6 @@
 <script lang="ts">
   import {onDestroy} from "svelte"
-  import {Nip46Broker} from "@welshman/signer"
+  import {Nip46Broker, type Nip46BrokerParams} from "@welshman/signer"
   import {nip46Perms, addSession} from "@welshman/app"
   import {slideAndFade} from "@lib/transition"
   import Spinner from "@lib/components/Spinner.svelte"
@@ -67,18 +67,29 @@
   let bunker = ""
   let loading = false
 
-  init.result.then(async pubkey => {
-    if (pubkey) {
+  init.result.then(async remoteSignerPubkey => {
+    if (remoteSignerPubkey) {
       loading = true
 
+      //TODO: This is an ugly way of solving the chicken and egg problem
+      const params: Nip46BrokerParams = {
+        handler: {
+          pubkey: remoteSignerPubkey,
+          relays: SIGNER_RELAYS,
+        },
+        secret: init.clientSecret,
+      }
+      const broker = Nip46Broker.get(params)
+      const userPubkey = await broker.getPublicKey()
+
       addSession({
-        pubkey,
+        pubkey: userPubkey,
         method: "nip46",
         secret: init.clientSecret,
-        handler: {pubkey, relays: SIGNER_RELAYS},
+        handler: {pubkey: remoteSignerPubkey, relays: SIGNER_RELAYS},
       })
 
-      await loadUserData(pubkey)
+      await loadUserData(userPubkey)
 
       setChecked("*")
       clearModals()
@@ -99,6 +110,7 @@
   </ModalHeader>
   {#if !loading}
     <div class="w-xs m-auto" out:slideAndFade>
+      {init.nostrconnect}
       <QRCode code={init.nostrconnect} />
     </div>
   {/if}

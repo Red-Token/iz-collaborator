@@ -18,7 +18,7 @@
     <div slot="title" class="flex gap-1">
       <RelayName {url} />
       {#if $spacesNotifications.includes(url)}
-        <div class="relative top-1 h-2 w-2 rounded-full bg-primary" />
+        <div class="bg-primary relative top-1 h-2 w-2 rounded-full" />
       {/if}
     </div>
     <div slot="info"><RelayDescription {url} /></div>

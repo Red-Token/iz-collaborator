@@ -15,7 +15,7 @@
   }
 </script>
 
-<div class="join border border-solid border-neutral text-xs">
+<div class="join border-neutral border border-solid text-xs">
   <ChatMessageEmojiButton {event} {pubkeys} />
   <Button class="btn join-item btn-xs" on:click={showInfo}>
     <Icon size={4} icon="code-2" />

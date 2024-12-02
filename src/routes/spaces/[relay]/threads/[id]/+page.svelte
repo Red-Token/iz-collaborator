@@ -48,7 +48,7 @@
 </script>
 
 <div class="relative flex flex-col-reverse gap-3 px-2">
-  <div class="absolute left-[51px] top-32 h-[calc(100%-248px)] w-[2px] bg-neutral" />
+  <div class="bg-neutral absolute left-[51px] top-32 h-[calc(100%-248px)] w-[2px]" />
   {#if $event}
     {#if !showReply}
       <div class="flex justify-end p-2">

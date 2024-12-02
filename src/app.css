@@ -69,11 +69,11 @@
 }
 
 .card2 {
-  @apply rounded-box p-6 text-base-content;
+  @apply rounded-box text-base-content p-6;
 }
 
 .card2.card2-sm {
-  @apply p-4 text-base-content;
+  @apply text-base-content p-4;
 }
 
 .column {
@@ -157,7 +157,7 @@
 }
 
 .link {
-  @apply cursor-pointer text-primary underline;
+  @apply text-primary cursor-pointer underline;
 }
 
 .input input::placeholder {
@@ -189,7 +189,7 @@
 }
 
 .note-editor .tiptap[contenteditable="true"] {
-  @apply input input-bordered h-auto min-h-32 rounded-box p-[.65rem] pb-6;
+  @apply input input-bordered rounded-box h-auto min-h-32 p-[.65rem] pb-6;
 }
 
 .tiptap pre code {
@@ -202,7 +202,7 @@
 
 .link-content,
 .tiptap [tag] {
-  @apply max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded bg-neutral px-1 text-neutral-content no-underline;
+  @apply bg-neutral text-neutral-content max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded px-1 no-underline;
 }
 
 .link-content.link-content-selected {

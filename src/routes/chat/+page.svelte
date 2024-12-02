@@ -21,7 +21,7 @@
   })
 </script>
 
-<div class="hidden min-h-screen md:hero">
+<div class="md:hero hidden min-h-screen">
   <div class="col-2 hero-content text-center">
     <p class="row-2 text-lg">
       <Icon icon="info-circle" />

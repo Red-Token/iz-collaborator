@@ -82,7 +82,7 @@
     <p slot="label">Summary</p>
     <div
       slot="input"
-      class="relative z-feature flex gap-2 border-t border-solid border-base-100 bg-base-100">
+      class="border-base-100 bg-base-100 relative z-feature flex gap-2 border-t border-solid">
       <div class="input-editor flex-grow overflow-hidden">
         <EditorContent editor={$editor} />
       </div>

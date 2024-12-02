@@ -30,7 +30,7 @@
 
 <Link class="flex flex-col justify-start gap-1" href={makeChatPath(pubkeys)}>
   <div
-    class="cursor-pointer border-t border-solid border-base-100 px-6 py-2 transition-colors hover:bg-base-100 {$$props.class}"
+    class="border-base-100 hover:bg-base-100 cursor-pointer border-t border-solid px-6 py-2 transition-colors {$$props.class}"
     class:bg-base-100={active}>
     <div class="flex flex-col justify-start gap-1">
       <div class="flex items-center justify-between gap-2">
@@ -48,7 +48,7 @@
           {/if}
         </div>
         {#if !active && $notification}
-          <div class="h-2 w-2 rounded-full bg-primary" transition:fade />
+          <div class="bg-primary h-2 w-2 rounded-full" transition:fade />
         {/if}
       </div>
       <p class="overflow-hidden text-ellipsis whitespace-nowrap text-sm">

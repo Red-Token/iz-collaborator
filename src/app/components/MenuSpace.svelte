@@ -79,7 +79,7 @@
         <Popover hideOnClick onClose={toggleMenu}>
           <ul
             transition:fly
-            class="menu absolute z-popover mt-2 w-full rounded-box bg-base-100 p-2 shadow-xl">
+            class="menu rounded-box bg-base-100 absolute z-popover mt-2 w-full p-2 shadow-xl">
             <li>
               <Button on:click={showMembers}>
                 <Icon icon="user-rounded" />

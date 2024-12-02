@@ -60,7 +60,7 @@
       <ChatItem {id} {pubkeys} {messages} />
     {/each}
     {#await promise}
-      <div class="border-t border-solid border-base-100 px-6 py-4 text-xs">
+      <div class="border-base-100 border-t border-solid px-6 py-4 text-xs">
         <Spinner loading>Loading conversations...</Spinner>
       </div>
     {/await}

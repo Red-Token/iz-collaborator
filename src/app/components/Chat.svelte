@@ -154,7 +154,7 @@
     {#if $missingInboxes.includes(assertNotNil($pubkey))}
       <div class="py-12">
         <div class="card2 col-2 m-auto max-w-md items-center text-center">
-          <p class="row-2 text-lg text-error">
+          <p class="row-2 text-error text-lg">
             <Icon icon="danger" />
             Your inbox is not configured.
           </p>

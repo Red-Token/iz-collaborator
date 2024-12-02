@@ -45,7 +45,7 @@
   on:submit|preventDefault={$loading ? undefined : submit}>
   <Button
     data-tip="Add an image"
-    class="center tooltip tooltip-right h-10 w-10 min-w-10 rounded-box bg-base-300 transition-colors hover:bg-base-200"
+    class="center tooltip tooltip-right rounded-box bg-base-300 hover:bg-base-200 h-10 w-10 min-w-10 transition-colors"
     disabled={$loading}
     on:click={$editor.commands.selectFiles}>
     {#if $loading}
