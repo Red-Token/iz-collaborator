@@ -1,5 +1,6 @@
 #IDE
 .idea
+.vscode
 
 node_modules
 
@@ -8,7 +9,7 @@ node_modules
 .vercel
 /.svelte-kit
 /build
-
+/electronapp
 # OS
 .DS_Store
 Thumbs.db
