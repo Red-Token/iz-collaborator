@@ -2,13 +2,15 @@
 .idea
 
 node_modules
+.vscode
+.temporary
 
 # Output
 .output
 .vercel
 /.svelte-kit
 /build
-
+/electronapp
 # OS
 .DS_Store
 Thumbs.db

@@ -1,18 +1,28 @@
 import dotenv from "dotenv"
-import {defineConfig} from "vite"
-import {SvelteKitPWA} from "@vite-pwa/sveltekit"
-import {sveltekit} from "@sveltejs/kit/vite"
+import { defineConfig } from "vite"
+import { SvelteKitPWA } from "@vite-pwa/sveltekit"
+import { sveltekit } from "@sveltejs/kit/vite"
 import svg from "@poppanator/sveltekit-svg"
+import { join } from "path"
 
-dotenv.config({path: ".env.local"})
-dotenv.config({path: ".env"})
+dotenv.config({ path: ".env.local" })
+dotenv.config({ path: ".env" })
 
 export default defineConfig({
+
+  build: {
+    outDir: 'electronapp',
+    emptyOutDir: true,
+    sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: join(__dirname, 'main.ts'),
+        //preload: join(__dirname, 'preload.ts')
+      }
+    }
+  },
   server: {
     port: 1847,
-  },
-  build: {
-    sourcemap: true,
   },
   plugins: [
     sveltekit(),
@@ -30,9 +40,9 @@ export default defineConfig({
         // @ts-ignore
         permissions: ["clipboardRead", "clipboardWrite", "unlimitedStorage"],
         icons: [
-          {src: "pwa-64x64.png", sizes: "64x64", type: "image/png"},
-          {src: "pwa-192x192.png", sizes: "192x192", type: "image/png"},
-          {src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any"},
+          { src: "pwa-64x64.png", sizes: "64x64", type: "image/png" },
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any" },
           {
             src: "maskable-icon-512x512.png",
             sizes: "512x512",

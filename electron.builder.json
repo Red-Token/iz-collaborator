@@ -1,0 +1,19 @@
+{
+    "appId": "com.example.app",
+    "productName": "My Electron App",
+    "files": [
+      "electronapp/**/*",
+      "main.js",
+      "preload.js"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true
+    }
+  }
