@@ -1,11 +1,11 @@
 <script lang="ts">
   import {fromPairs} from "@welshman/lib"
-  import {secondsToDate, getLocale, formatTimestamp, formatTimestampAsDate} from "@welshman/app"
+  import {secondsToDate, LOCALE, formatTimestamp, formatTimestampAsDate} from "@welshman/app"
   import Icon from "@lib/components/Icon.svelte"
 
   export let event
 
-  const timeFmt = new Intl.DateTimeFormat(getLocale(), {timeStyle: "short"})
+  const timeFmt = new Intl.DateTimeFormat(LOCALE, {timeStyle: "short"}) /// сrutch///replaced imported function getLocale()
 
   $: meta = fromPairs(event.tags) as Record<string, string>
   $: end = parseInt(meta.end)

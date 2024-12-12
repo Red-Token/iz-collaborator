@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#7161FF
+" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'nonce-NONCE_PLACEHOLDER'; style-src 'self' 'nonce-NONCE_PLACEHOLDER'; img-src 'self' 'nonce-NONCE_PLACEHOLDER' data: https:; ">
+    <meta name="description" content="Flotilla is nostr — for communities." />
+    <meta name="og:url" content="https://flotilla.social" />
+    <meta name="og:type" content="website" />
+    <meta name="og:title" content="Flotilla
+" />
+    <meta name="og:description" content="Flotilla is nostr — for communities.
+" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="https://flotilla.social
+" />
+    <meta name="twitter:title" content="Flotilla
+" />
+    <meta name="twitter:description" content="Flotilla is nostr — for communities.
+" />
+    <meta name="twitter:image" content="./client/maskable-icon-512x512.png" />
+    <link rel="icon" href="./client/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="./client/pwa-64x64.png" sizes="any" type="image/png" />
+    <link rel="icon" href="./client/pwa-192x192.png" sizes="any" type="image/png" />
+    <link rel="icon" href="./client/pwa-512x512.png" sizes="any" type="image/png" />
+    <link rel="icon" href="./client/pwa-64x64.png" sizes="64x64" type="image/png" />
+    <link rel="icon" href="./client/pwa-192x192.png" sizes="192x192" type="image/png" />
+    <link rel="icon" href="./client/pwa-512x512.png" sizes="512x512" type="image/png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-180x180.png" />
+    <link rel="modulepreload" href="./_app/immutable/entry/start.DkOt-V8H.js">
+    <link rel="modulepreload" href="./_app/immutable/chunks/entry.D4G90_Am.js">
+    <link rel="modulepreload" href="./_app/immutable/chunks/scheduler.Ud_sMaao.js">
+    <link rel="modulepreload" href="./_app/immutable/entry/app.COzR-CK4.js">
+    <link rel="modulepreload" href="./_app/immutable/chunks/index.DqBopHI-.js">
+</head>
+
+<body data-sveltekit-preload-data="hover">
+    <div nonce="NONCE_PLACEHOLDER" style="display: contents">
+        <script nonce="NONCE_PLACEHOLDER">
+
+            {
+                const params = new URLSearchParams(window.location.search);
+                const nonce = params.get('nonce');
+                const metaTag = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+                metaTag.content = metaTag.content.replace('NONCE_PLACEHOLDER', nonce);
+
+                const script = document.createElement('script');
+                script.nonce = nonce;
+                script.innerHTML = `console.log("Script executed with nonce:", "${nonce}")`;
+                document.body.appendChild(script);
+
+
+                __sveltekit_1lx64rb = {
+                    base: ""
+                };
+
+                const element = document.currentScript.parentElement;
+
+                Promise.all([
+                    import("./client/_app/immutable/entry/start.DkOt-V8H.js"),
+                    import("./client/_app/immutable/entry/app.COzR-CK4.js")
+                ]).then(([kit, app]) => {
+                    kit.start(app, element);
+                });
+            }
+        </script>
+    </div>
+    <script nonce="NONCE_PLACEHOLDER" defer src="./script.manual.js"></script>
+</body>
+
+</html>

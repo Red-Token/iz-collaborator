@@ -22,14 +22,14 @@ function createWindow(): void {
         show: false
     });
 
-    if (process.env.NODE_ENV === 'development') {
-        mainWindow.loadURL('http://localhost:3000');
-    }
-    else {
-        mainWindow.loadFile('./electronapp/index.html').catch(err => {//loadURL(`file://${__dirname}/index.html`)
-            console.error("Error loading file:", err);
-        });
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //     mainWindow.loadURL('http://localhost:3000');
+    // }
+    // else {
+    mainWindow.loadFile('./electronapp/index.html').catch(err => {  
+        console.error("Error loading file:", err);
+    });
+    //}
 
     mainWindow.on("ready-to-show", () => {
         if (mainWindow) {
