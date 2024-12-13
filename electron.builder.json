@@ -1,19 +1,27 @@
 {
-    "appId": "com.example.app",
-    "productName": "My Electron App",
-    "files": [
-      "electronapp/**/*",
-      "main.js",
-      "preload.js"
-    ],
-    "directories": {
-      "buildResources": "assets"
+  "appId": "com.example.myapp",
+  "productName": "Iz-Collaborator",
+  "files": [
+    "build/**/*",        
+    "electron/**/*"      
+  ],
+  "asar": false,
+  "directories": {
+    "buildResources": "assets"
+  },
+  "extraMetadata": {
+    "main": "electron/main.js"
     },
-    "win": {
-      "target": "nsis"
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": true
-    }
+  "win": {
+    "target": "nsis",
+    "icon": "assets/icon.ico"
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "assets/icon.icns"
+  },
+  "linux": {
+    "target": "AppImage",
+    "icon": "assets"
   }
+}
