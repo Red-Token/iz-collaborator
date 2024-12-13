@@ -4,7 +4,6 @@
   "private": true,
   "main": "./electron/main.js",
   "type": "module",
-  
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -37,7 +36,6 @@
     "postcss": "^8.4.40",
     "prettier": "^3.1.1",
     "prettier-plugin-svelte": "^3.1.2",
-    "rollup": "^4.28.1",
     "svelte": "^4.2.7",
     "svelte-check": "^3.6.0",
     "tailwindcss": "^3.4.7",
@@ -56,8 +54,7 @@
     "@noble/hashes": "^1.4.0",
     "@poppanator/sveltekit-svg": "^4.2.1",
     "@sentry/browser": "^8.35.0",
-    "@sveltejs/adapter-node": "^5.2.9",
-    "@sveltejs/adapter-static": "^3.0.4",
+    "@sveltejs/adapter-static": "^0.0.17",
     "@tiptap/extension-code": "^2.6.6",
     "@tiptap/extension-code-block": "^2.6.6",
     "@tiptap/extension-document": "^2.6.6",
@@ -82,6 +79,7 @@
     "@welshman/signer": "~0.0.14",
     "@welshman/store": "~0.0.12",
     "@welshman/util": "~0.0.45",
+    "adapter-electron": "^1.0.5",
     "daisyui": "^4.12.10",
     "date-picker-svelte": "^2.13.0",
     "dotenv": "^16.4.5",

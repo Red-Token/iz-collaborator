@@ -1,11 +1,11 @@
-import  adapter from "@sveltejs/adapter-node"
+import adapter from "adapter-electron"
 import {vitePreprocess} from "@sveltejs/vite-plugin-svelte"
 
 /** @type {import('@sveltejs/kit').Config} */
 export default {
   preprocess: vitePreprocess(),
   kit: {
-    adapter: adapter({out: 'electron/build',}),
+    adapter: adapter(),
     alias: {
       "@src": "src",
       "@app": "src/app",
