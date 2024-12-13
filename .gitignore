@@ -3,13 +3,16 @@
 
 node_modules
 .vscode
+.temporary
 
 # Output
 .output
 .vercel
 /.svelte-kit
 /build
+/electron/build
 /electronapp
+/dist
 # OS
 .DS_Store
 Thumbs.db

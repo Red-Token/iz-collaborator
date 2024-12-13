@@ -38,10 +38,10 @@ function createWindow() {
       mainWindow.show()
     }
   })
-  mainWindow.webContents.openDevTools()
-  mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
-    console.error(`Ошибка загрузки: ${errorCode} - ${errorDescription}`)
-  })
+  // mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
+  //   console.error(`Error Load: ${errorCode} - ${errorDescription}`)
+  // })
   mainWindow.on("closed", function () {
     mainWindow = null
   })

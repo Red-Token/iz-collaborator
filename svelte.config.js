@@ -5,7 +5,7 @@ import {vitePreprocess} from "@sveltejs/vite-plugin-svelte"
 export default {
   preprocess: vitePreprocess(),
   kit: {
-    adapter: adapter({out: 'build',}),
+    adapter: adapter({out: 'electron/build',}),
     alias: {
       "@src": "src",
       "@app": "src/app",
