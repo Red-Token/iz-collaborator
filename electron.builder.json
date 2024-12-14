@@ -1,17 +1,13 @@
 {
   "appId": "com.example.myapp",
   "productName": "Iz-Collaborator",
-  "files": [
-    "build/**/*",        
-    "electron/**/*"      
-  ],
-  "asar": false,
+  "files": ["build/**/*", "electron/**/*"],
   "directories": {
     "buildResources": "assets"
   },
   "extraMetadata": {
     "main": "electron/main.js"
-    },
+  },
   "win": {
     "target": "nsis",
     "icon": "assets/icon.ico"

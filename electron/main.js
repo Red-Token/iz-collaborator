@@ -1,36 +1,69 @@
 export default true
 import electron_1 from "electron"
-import path from "path"
+import nodePath from "node:path"
 
 import {fork} from "child_process"
 import {fileURLToPath} from "url"
+import log from "electron-log"
+
+//path
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-process.env.NODE_ENV = electron_1.app.isPackaged ? "production" : "development"
+const __dirname = nodePath.dirname(__filename)
 
-// @type {electron_1.BrowserWindow | null}
+//help
+const isDev = !electron_1.app.isPackaged
+const isMac = process.platform === "darwin" ? true : false
+const serverPath = isDev ? nodePath.join(__dirname, "build", "index.js") : nodePath.join(__dirname, "../build/index.js")
+process.env.NODE_ENV = isDev ? "development" : "production"
+
+// if (!isDev) {
+//   const server = import(`./build/index.js`)
+//     .then(server => server)
+//     .catch(err => log.error(`Server Load Error: ${err}`))
+// }
+
 let mainWindow
-const isPackaged = electron_1.app.isPackaged
-console.log("App is packaged:", electron_1.app.isPackaged)
+// @type {electron_1.BrowserWindow | null}
+log.info("App is packaged:", !isDev)
 
-const serverPath = isPackaged
-  ? path.join(__dirname, "build", "index.js")
-  : path.join(__dirname, "../build/index.js")
+electron_1.app.on("ready", async () => {
+  createWindow()
 
-electron_1.app.on("ready", createWindow)
+  mainWindow.on("close", () => {
+    electron_1.app.quit()
+  })
+})
 
-function createWindow() {
-  console.log("Server path:", serverPath)
+electron_1.app.on("window-all-closed", () => {
+  if (!isMac) {
+    electron_1.app.quit()
+  }
+})
+
+electron_1.app.on("activate", () => {
+  if (mainWindow === null) {
+    //                        if (BrowserWindow.getAllWindows().length === 0)
+    createWindow()
+  }
+})
+async function createWindow() {
+  log.info(`Server path: ${serverPath}`)
   fork(serverPath)
 
   mainWindow = new electron_1.BrowserWindow({
+    title: `iz-collaborator`,
     width: 900,
     height: 600,
+    resizable: !isDev ? true : false,
+    show: true,
     webPreferences: {
+      contextIsolation: true,
+      devTools: isDev,
+      nodeIntegration: true,
       //preload: path.join(__dirname, "preload.js"),
     },
-    show: false,
   })
+
   mainWindow.loadURL("http://localhost:3000")
 
   mainWindow.on("ready-to-show", function () {
@@ -38,21 +71,8 @@ function createWindow() {
       mainWindow.show()
     }
   })
-  // mainWindow.webContents.openDevTools()
-  // mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
-  //   console.error(`Error Load: ${errorCode} - ${errorDescription}`)
-  // })
+
   mainWindow.on("closed", function () {
     mainWindow = null
   })
 }
-electron_1.app.on("window-all-closed", function () {
-  if (process.platform !== "darwin") {
-    electron_1.app.quit()
-  }
-})
-electron_1.app.on("activate", function () {
-  if (mainWindow === null) {
-    createWindow()
-  }
-})
