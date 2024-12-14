@@ -1,64 +1,77 @@
-export default true
-import electron_1 from "electron"
+import {app, BrowserWindow, Tray, Menu, shell } from "electron"
 import nodePath from "node:path"
-
 import {fork} from "child_process"
 import {fileURLToPath} from "url"
-import log from "electron-log"
+//import log from "electron-log" //TODO Need test the import at production
 
 //path
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = nodePath.dirname(__filename)
 
 //help
-const isDev = !electron_1.app.isPackaged
+const isDev = !app.isPackaged
 const isMac = process.platform === "darwin" ? true : false
-const serverPath = isDev ? nodePath.join(__dirname, "build", "index.js") : nodePath.join(__dirname, "../build/index.js")
-process.env.NODE_ENV = isDev ? "development" : "production"
+const serverPath = isDev ? nodePath.join(__dirname, "./build/index.js") : nodePath.join(__dirname, "build", "index.js")
 
-// if (!isDev) {
-//   const server = import(`./build/index.js`)
-//     .then(server => server)
-//     .catch(err => log.error(`Server Load Error: ${err}`))
-// }
+///TODO Add a delay for rendering before starting the server.
 
+let tray
 let mainWindow
-// @type {electron_1.BrowserWindow | null}
-log.info("App is packaged:", !isDev)
 
-electron_1.app.on("ready", async () => {
+console.log("App is packaged:", !isDev)
+
+app.on("ready", async () => {
   createWindow()
 
-  mainWindow.on("close", () => {
-    electron_1.app.quit()
-  })
+  tray = new Tray(nodePath.join(__dirname, "build", "client", "pwa-64x64.png"))
+
+  tray.setToolTip("iz-collaborator")
+
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      {
+        label: "Show",
+        click: () => {
+          mainWindow.show()
+        },
+      },
+      {
+        label: "Quit",
+        click: () => {
+          app.isQuiting = true
+          app.quit()
+        },
+      },
+    ]),
+  )
+
+  tray.on("click", () => (mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()))
 })
 
-electron_1.app.on("window-all-closed", () => {
+app.on("window-all-closed", () => {
   if (!isMac) {
-    electron_1.app.quit()
+    app.quit()
   }
 })
 
-electron_1.app.on("activate", () => {
-  if (mainWindow === null) {
-    //                        if (BrowserWindow.getAllWindows().length === 0)
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
   }
 })
+
 async function createWindow() {
-  log.info(`Server path: ${serverPath}`)
+  console.log(`Server path: ${serverPath}`)
   fork(serverPath)
 
-  mainWindow = new electron_1.BrowserWindow({
+  mainWindow = new BrowserWindow({
     title: `iz-collaborator`,
     width: 900,
     height: 600,
-    resizable: !isDev ? true : false,
     show: true,
     webPreferences: {
       contextIsolation: true,
-      devTools: isDev,
+      //devTools: isDev, //TODO Uncomment before release
       nodeIntegration: true,
       //preload: path.join(__dirname, "preload.js"),
     },
@@ -66,13 +79,25 @@ async function createWindow() {
 
   mainWindow.loadURL("http://localhost:3000")
 
-  mainWindow.on("ready-to-show", function () {
+  mainWindow.webContents.on("new-window", (event, url) => {
+    event.preventDefault() 
+    shell.openExternal(url)
+  })
+
+  mainWindow.on("ready-to-show", () => {
     if (mainWindow) {
       mainWindow.show()
     }
   })
 
-  mainWindow.on("closed", function () {
-    mainWindow = null
+  mainWindow.on("close", event => {
+    if (!app.isQuiting) {
+      event.preventDefault()
+      mainWindow.hide()
+    }
+  })
+
+  mainWindow.on("minimize", event => {
+    mainWindow.hide()
   })
 }

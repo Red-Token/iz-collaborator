@@ -1,6 +1,11 @@
 {
-  "appId": "com.example.myapp",
+  "appId": "com.electron.iz-collaborator",
   "productName": "Iz-Collaborator",
+
+  "author": {
+    "name": "Red-Token",
+    "email": "support@redtoken.ae"
+  },
   "files": ["build/**/*", "electron/**/*"],
   "directories": {
     "buildResources": "assets"
@@ -17,7 +22,7 @@
     "icon": "assets/icon.icns"
   },
   "linux": {
-    "target": "AppImage",
+    "target": ["AppImage"],
     "icon": "assets"
   }
 }
