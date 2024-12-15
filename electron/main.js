@@ -1,4 +1,4 @@
-import {app, BrowserWindow, Tray, Menu, shell } from "electron"
+import {app, BrowserWindow, Tray, Menu, shell} from "electron"
 import nodePath from "node:path"
 import {fork} from "child_process"
 import {fileURLToPath} from "url"
@@ -11,7 +11,9 @@ const __dirname = nodePath.dirname(__filename)
 //help
 const isDev = !app.isPackaged
 const isMac = process.platform === "darwin" ? true : false
-const serverPath = isDev ? nodePath.join(__dirname, "./build/index.js") : nodePath.join(__dirname, "build", "index.js")
+const serverPath = isDev
+  ? nodePath.join(__dirname, "./build/index.js")
+  : nodePath.join(__dirname, "build", "index.js")
 
 ///TODO Add a delay for rendering before starting the server.
 
@@ -20,46 +22,62 @@ let mainWindow
 
 console.log("App is packaged:", !isDev)
 
-app.on("ready", async () => {
-  createWindow()
+// only one instance
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (!mainWindow.isVisible()) mainWindow.restore()
+      mainWindow.focus()
+    }
+  })
 
-  tray = new Tray(nodePath.join(__dirname, "build", "client", "pwa-64x64.png"))
-
-  tray.setToolTip("iz-collaborator")
-
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
-      {
-        label: "Show",
-        click: () => {
-          mainWindow.show()
-        },
-      },
-      {
-        label: "Quit",
-        click: () => {
-          app.isQuiting = true
-          app.quit()
-        },
-      },
-    ]),
-  )
-
-  tray.on("click", () => (mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()))
-})
-
-app.on("window-all-closed", () => {
-  if (!isMac) {
-    app.quit()
-  }
-})
-
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+  app.on("ready", async () => {
     createWindow()
-  }
-})
 
+    /// Remove app Menu
+    Menu.setApplicationMenu(null)
+
+    /// Add Contect Menu
+    tray = new Tray(nodePath.join(__dirname, "build", "client", "icon_32x32.png"))
+
+    tray.setToolTip("iz-collaborator")
+
+    tray.setContextMenu(
+      Menu.buildFromTemplate([
+        {
+          label: "Show",
+          click: () => {
+            mainWindow.show()
+          },
+        },
+        {
+          label: "Quit",
+          click: () => {
+            app.isQuiting = true
+            app.quit()
+          },
+        },
+      ]),
+    )
+
+    tray.on("click", () => (mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()))
+  })
+
+  app.on("window-all-closed", () => {
+    if (!isMac) {
+      app.quit()
+    }
+  })
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+    }
+  })
+}
 async function createWindow() {
   console.log(`Server path: ${serverPath}`)
   fork(serverPath)
@@ -79,8 +97,8 @@ async function createWindow() {
 
   mainWindow.loadURL("http://localhost:3000")
 
-  mainWindow.webContents.on("new-window", (event, url) => {
-    event.preventDefault() 
+  mainWindow.webContents.on("new-window", (event, url) => { ///TODO fix it
+    event.preventDefault()
     shell.openExternal(url)
   })
 
@@ -101,3 +119,7 @@ async function createWindow() {
     mainWindow.hide()
   })
 }
+
+// function delay(ms) {
+//   return new Promise(resolve => setTimeout(resolve, ms))
+// }
