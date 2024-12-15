@@ -2,7 +2,7 @@ import {app, BrowserWindow, Tray, Menu, shell} from "electron"
 import nodePath from "node:path"
 import {fork} from "child_process"
 import {fileURLToPath} from "url"
-//import log from "electron-log" //TODO Need test the import at production
+//import log from "electron-log" // or 'electron-log/main' ; TODO Need test the import at production
 
 //path
 const __filename = fileURLToPath(import.meta.url)
@@ -18,7 +18,9 @@ const serverPath = isDev
 ///TODO Add a delay for rendering before starting the server.
 
 let tray
-let mainWindow
+let mainWindow 
+
+
 
 console.log("App is packaged:", !isDev)
 
@@ -33,8 +35,10 @@ if (!gotTheLock) {
       mainWindow.focus()
     }
   })
+  
+   app.on("ready", async () => {
+    
 
-  app.on("ready", async () => {
     createWindow()
 
     /// Remove app Menu
@@ -74,6 +78,7 @@ if (!gotTheLock) {
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
+      
       createWindow()
     }
   })
@@ -81,12 +86,11 @@ if (!gotTheLock) {
 async function createWindow() {
   console.log(`Server path: ${serverPath}`)
   fork(serverPath)
-
   mainWindow = new BrowserWindow({
     title: `iz-collaborator`,
     width: 900,
     height: 600,
-    show: true,
+    show: false,
     webPreferences: {
       contextIsolation: true,
       //devTools: isDev, //TODO Uncomment before release
@@ -94,7 +98,6 @@ async function createWindow() {
       //preload: path.join(__dirname, "preload.js"),
     },
   })
-
   mainWindow.loadURL("http://localhost:3000")
 
   mainWindow.webContents.on("new-window", (event, url) => { ///TODO fix it
@@ -102,8 +105,9 @@ async function createWindow() {
     shell.openExternal(url)
   })
 
-  mainWindow.on("ready-to-show", () => {
+  mainWindow.on("ready-to-show", async () => {
     if (mainWindow) {
+      await delay(1000)
       mainWindow.show()
     }
   })
@@ -120,6 +124,6 @@ async function createWindow() {
   })
 }
 
-// function delay(ms) {
-//   return new Promise(resolve => setTimeout(resolve, ms))
-// }
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
