@@ -4,8 +4,8 @@
   import Icon from "@lib/components/Icon.svelte"
 
   export let event
-  //const getLocale = () => new Intl.DateTimeFormat().resolvedOptions().locale;
-  const timeFmt = new Intl.DateTimeFormat(getLocale(), {timeStyle: "short"}) /////TODO: this is сrutch replaced import function getLocale()
+  
+  const timeFmt = new Intl.DateTimeFormat(getLocale(), {timeStyle: "short"})
 
   $: meta = fromPairs(event.tags) as Record<string, string>
   $: end = parseInt(meta.end)
