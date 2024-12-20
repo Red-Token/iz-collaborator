@@ -4,7 +4,8 @@ import path from "path"
 import { fork } from "child_process"
 import { fileURLToPath } from "url"
 import http from "http"
-//import log from "electron-log" // or 'electron-log/main' ; TODO Need test the import at production
+//import Logger from "electron-log"
+
 
 //path
 const __filename = fileURLToPath(import.meta.url)
@@ -46,6 +47,7 @@ if (!gotTheLock) {
 				Menu.buildFromTemplate([{ label: app.name, submenu: [{ role: "about" }, { role: "quit" }] }]) //TODO should be the custom menu
 			)
 		} else {
+			if (!isDev)
 			Menu.setApplicationMenu(null)
 		}
 	})
@@ -94,7 +96,7 @@ async function createWindow() {
 async function startServer() {
 	console.log(`Starting server from: ${serverPath}`)
 	serverProcess = fork(serverPath)
-	serverProcess.on("error", err => console.error("Server process error:", err))
+	serverProcess.on("error", err => console.log("Server process error:", err))
 	serverProcess.on("exit", code => console.log(`Server process exited with code ${code}`))
 }
 
