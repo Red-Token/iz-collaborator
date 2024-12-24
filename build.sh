@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+rm -rf ./build ./electron/build
 temp_env=$(declare -p -x)
 
 if [ -f .env ]; then
