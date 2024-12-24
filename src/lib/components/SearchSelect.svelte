@@ -20,8 +20,8 @@
   const search = readable(
     createSearch(options, {
       getValue: identity,
-      fuseOptions: {keys: [""]},
-    }),
+      fuseOptions: {keys: [""]}
+    })
   )
 
   const select = (newValue: string) => {
@@ -47,13 +47,7 @@
 <div class={$$props.class}>
   <label class="input input-bordered flex w-full items-center gap-3" bind:this={input}>
     <slot name="before" />
-    <input
-      class="grow"
-      type="text"
-      bind:value
-      on:keydown={onKeyDown}
-      on:focus={onFocus}
-      on:blur={onBlur} />
+    <input class="grow" type="text" bind:value on:keydown={onKeyDown} on:focus={onFocus} on:blur={onBlur} />
     <Icon icon="alt-arrow-down" class="cursor-pointer" />
   </label>
   <Tippy
@@ -67,12 +61,13 @@
       term: value,
       component: SuggestionString,
       class: "rounded-box",
-      style: `left: 4px; width: ${input?.clientWidth + 12}px`,
+      style: `left: 4px; width: ${input?.clientWidth + 12}px`
     }}
     params={{
       trigger: "manual",
       interactive: true,
       maxWidth: "none",
-      getReferenceClientRect: () => input.getBoundingClientRect(),
-    }} />
+      getReferenceClientRect: () => input.getBoundingClientRect()
+    }}
+  />
 </div>

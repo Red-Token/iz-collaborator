@@ -3,10 +3,9 @@
   import {onMount} from "svelte"
   import {nip19} from "nostr-tools"
   import {get, derived} from "svelte/store"
-  import {page} from "$app/stores"
   import {dev} from "$app/environment"
   import {bytesToHex, hexToBytes} from "@noble/hashes/utils"
-  import {identity, uniq, sleep, take, sortBy, ago, now, HOUR, WEEK, Worker} from "@welshman/lib"
+  import {identity, sleep, take, sortBy, ago, now, HOUR, WEEK, Worker, throttle} from "@welshman/lib"
   import type {TrustedEvent} from "@welshman/util"
   import {
     PROFILE,
@@ -17,9 +16,9 @@
     INBOX_RELAYS,
     WRAP,
     getPubkeyTagValues,
-    getListTags,
+    getListTags
   } from "@welshman/util"
-  import {throttled} from "@welshman/store"
+  import {throttled, custom} from "@welshman/store"
   import {
     relays,
     handles,
@@ -36,8 +35,8 @@
     signer,
     dropSession,
     getRelayUrls,
-    userInboxRelaySelections,
-    load,
+    subscribe,
+    userInboxRelaySelections
   } from "@welshman/app"
   import * as lib from "@welshman/lib"
   import * as util from "@welshman/util"
@@ -49,20 +48,11 @@
   import {setupTracking} from "@app/tracking"
   import {setupAnalytics} from "@app/analytics"
   import {theme} from "@app/theme"
-  import {
-    INDEXER_RELAYS,
-    getMembershipUrls,
-    getMembershipRooms,
-    userMembership,
-    ensureUnwrapped,
-    MESSAGE,
-    COMMENT,
-    THREAD,
-    GENERAL,
-  } from "@app/state"
-  import {loadUserData, subscribePersistent} from "@app/commands"
+  import {INDEXER_RELAYS, userMembership, ensureUnwrapped, canDecrypt} from "@app/state"
+  import {loadUserData} from "@app/commands"
+  import {listenForNotifications} from "@app/requests"
   import * as commands from "@app/commands"
-  import {checked} from "@app/notifications"
+  import * as requests from "@app/requests"
   import * as notifications from "@app/notifications"
   import * as state from "@app/state"
 
@@ -86,7 +76,8 @@
       ...app,
       ...state,
       ...commands,
-      ...notifications,
+      ...requests,
+      ...notifications
     })
 
     const getScoreEvent = () => {
@@ -127,7 +118,7 @@
     const migrateFreshness = (data: {key: string; value: number}[]) => {
       const cutoff = ago(HOUR)
 
-      return data.filter(({value}) => value < cutoff)
+      return data.filter(({value}) => value > cutoff)
     }
 
     const migratePlaintext = (data: {key: string; value: number}[]) => data.slice(0, 10_000)
@@ -141,28 +132,81 @@
 
       return take(
         30_000,
-        sortBy(e => -scoreEvent(e), events),
+        sortBy(e => -scoreEvent(e), events)
       )
     }
+
+    const migrate = (data: any[], options: any) => (options.migrate ? options.migrate(data) : data)
+
+    // TODO: remove this
+    const fromRepositoryAndTracker = (repository: any, tracker: any, options: any = {}) => ({
+      options,
+      keyPath: "id",
+      store: custom(
+        setter => {
+          let onUpdate = () => {
+            const events = migrate(repository.dump(), options)
+
+            setter(
+              events.map((event: any) => {
+                const relays = Array.from(tracker.getRelays(event.id))
+
+                return {id: event.id, event, relays}
+              })
+            )
+          }
+
+          if (options.throttle) {
+            onUpdate = throttle(options.throttle, onUpdate)
+          }
+
+          onUpdate()
+          tracker.on("update", onUpdate)
+          repository.on("update", onUpdate)
+
+          return () => {
+            tracker.off("update", onUpdate)
+          }
+        },
+        {
+          set: (items: {event: TrustedEvent; relays: string[]}[]) => {
+            const events: TrustedEvent[] = []
+            const relaysById = new Map<string, Set<string>>()
+
+            for (const {event, relays} of items) {
+              if (!event) {
+                continue
+              }
+              events.push(event)
+              relaysById.set(event.id, new Set(relays))
+            }
+
+            repository.load(events)
+            tracker.load(relaysById)
+          }
+        }
+      )
+    })
 
     if (!db) {
       setupTracking()
       setupAnalytics()
 
       ready = initStorage("flotilla", 4, {
-        events: storageAdapters.fromRepository(repository, {throttle: 300, migrate: migrateEvents}),
-        relays: {keyPath: "url", store: throttled(1000, relays)},
-        handles: {keyPath: "nip05", store: throttled(1000, handles)},
-        checked: storageAdapters.fromObjectStore(checked, {throttle: 1000}),
+        relays: {keyPath: "url", store: throttled(3000, relays)},
+        handles: {keyPath: "nip05", store: throttled(3000, handles)},
         freshness: storageAdapters.fromObjectStore(freshness, {
-          throttle: 1000,
-          migrate: migrateFreshness,
+          throttle: 3000,
+          migrate: migrateFreshness
         }),
         plaintext: storageAdapters.fromObjectStore(plaintext, {
-          throttle: 1000,
-          migrate: migratePlaintext,
+          throttle: 3000,
+          migrate: migratePlaintext
         }),
-        tracker: storageAdapters.fromTracker(tracker, {throttle: 1000}),
+        events: fromRepositoryAndTracker(repository, tracker, {
+          throttle: 3000,
+          migrate: migrateEvents
+        })
       }).then(() => sleep(300))
 
       // Unwrap gift wraps as they come in, but throttled
@@ -171,6 +215,10 @@
       unwrapper.addGlobalHandler(ensureUnwrapped)
 
       repository.on("update", ({added}) => {
+        if (!$canDecrypt) {
+          return
+        }
+
         for (const event of added) {
           if (event.kind === WRAP) {
             unwrapper.push(event)
@@ -189,54 +237,29 @@
       }
 
       // Listen for space data, populate space-based notifications
-      let unsubRooms: any
+      let unsubSpaces: any
 
       userMembership.subscribe($membership => {
-        unsubRooms?.()
-
-        const since = ago(30)
-        const rooms = uniq(getMembershipRooms($membership).map(m => m.room)).concat(GENERAL)
-        const relays = uniq(getMembershipUrls($membership))
-
-        // Get one event for each of our notification categories
-        load({
-          relays,
-          filters: [
-            {kinds: [THREAD], limit: 1},
-            {kinds: [COMMENT], "#K": [String(THREAD)], limit: 1},
-            ...rooms.map(room => ({kinds: [MESSAGE], "#~": [room], limit: 1})),
-          ],
-        })
-
-        // Listen for new notifications/memberships
-        unsubRooms = subscribePersistent({
-          relays,
-          filters: [
-            {kinds: [THREAD], since},
-            {kinds: [COMMENT], "#K": [String(THREAD)], since},
-            {kinds: [MESSAGE], "#~": rooms, since},
-          ],
-        })
+        unsubSpaces?.()
+        unsubSpaces = listenForNotifications()
       })
 
       // Listen for chats, populate chat-based notifications
-      let unsubChats: any
+      let chatsSub: any
 
-      derived([pubkey, userInboxRelaySelections], identity).subscribe(
-        ([$pubkey, $userInboxRelaySelections]) => {
-          unsubChats?.()
+      derived([pubkey, userInboxRelaySelections], identity).subscribe(([$pubkey, $userInboxRelaySelections]) => {
+        chatsSub?.close()
 
-          if ($pubkey) {
-            unsubChats = subscribePersistent({
-              filters: [
-                {kinds: [WRAP], "#p": [$pubkey], since: ago(WEEK, 2)},
-                {kinds: [WRAP], "#p": [$pubkey], limit: 100},
-              ],
-              relays: getRelayUrls($userInboxRelaySelections),
-            })
-          }
-        },
-      )
+        if ($pubkey) {
+          chatsSub = subscribe({
+            filters: [
+              {kinds: [WRAP], "#p": [$pubkey], since: ago(WEEK, 2)},
+              {kinds: [WRAP], "#p": [$pubkey], limit: 100}
+            ],
+            relays: getRelayUrls($userInboxRelaySelections)
+          })
+        }
+      })
     }
   })
 </script>
@@ -252,9 +275,7 @@
 {:then}
   <div data-theme={$theme}>
     <AppContainer>
-      {#key $page.url.pathname}
-        <slot />
-      {/key}
+      <slot />
     </AppContainer>
     <ModalContainer />
     <div class="tippy-target" />

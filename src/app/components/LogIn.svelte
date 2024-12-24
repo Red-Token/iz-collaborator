@@ -1,44 +1,45 @@
 <script lang="ts">
   import {onMount} from "svelte"
   import {Capacitor} from "@capacitor/core"
-  import {getNip07} from "@welshman/signer"
-  // import {getNip07, getNip55, Nip55Signer} from "@welshman/signer"
+  import {getNip07, getNip55, Nip55Signer} from "@welshman/signer"
   import {addSession, type Session} from "@welshman/app"
   import Icon from "@lib/components/Icon.svelte"
   import Link from "@lib/components/Link.svelte"
   import Button from "@lib/components/Button.svelte"
-  // import SignUp from "@app/components/SignUp.svelte"
+  import SignUp from "@app/components/SignUp.svelte"
   import InfoNostr from "@app/components/InfoNostr.svelte"
   import LogInBunker from "@app/components/LogInBunker.svelte"
-  import {clearModals, pushModal} from "@app/modal"
-  import {PLATFORM_NAME} from "@app/state"
+  import LogInPassword from "@app/components/LogInPassword.svelte"
+  import {pushModal, clearModals} from "@app/modal"
+  import {PLATFORM_NAME, BURROW_URL} from "@app/state"
   import {pushToast} from "@app/toast"
   import {loadUserData} from "@app/commands"
   import {setChecked} from "@app/notifications"
 
-  // const signUp = () => pushModal(SignUp)
+  const signUp = () => pushModal(SignUp)
 
-  const withLoading = (cb: () => void) => async () => {
-    loading = true
+  const withLoading =
+    (s: string, cb: (...args: any[]) => any) =>
+    async (...args: any[]) => {
+      loading = s
 
-    try {
-      await cb()
-    } finally {
-      loading = false
+      try {
+        await cb(...args)
+      } finally {
+        loading = undefined
+      }
     }
-  }
 
   const onSuccess = async (session: Session, relays: string[] = []) => {
-    addSession(session)
-
     await loadUserData(session.pubkey, {relays})
 
+    addSession(session)
     pushToast({message: "Successfully logged in!"})
     setChecked("*")
     clearModals()
   }
 
-  const loginWithNip07 = withLoading(async () => {
+  const loginWithNip07 = withLoading("nip07", async () => {
     const pubkey = await getNip07()?.getPublicKey()
 
     if (pubkey) {
@@ -46,37 +47,37 @@
     } else {
       pushToast({
         theme: "error",
-        message: "Something went wrong! Please try again.",
+        message: "Something went wrong! Please try again."
       })
     }
   })
 
-  // const loginWithSigner = withLoading(async (app: any) => {
-  //   const signer = new Nip55Signer(app.packageName)
-  //   const pubkey = await signer.getPubkey()
-  //
-  //   if (pubkey) {
-  //     await onSuccess({method: "nip55", pubkey, signer: app.packageName})
-  //   } else {
-  //     pushToast({
-  //       theme: "error",
-  //       message: "Something went wrong! Please try again."
-  //     })
-  //   }
-  // })
+  const loginWithNip55 = withLoading("nip55", async (app: any) => {
+    const signer = new Nip55Signer(app.packageName)
+    const pubkey = await signer.getPubkey()
+
+    if (pubkey) {
+      await onSuccess({method: "nip55", pubkey, signer: app.packageName})
+    } else {
+      pushToast({
+        theme: "error",
+        message: "Something went wrong! Please try again."
+      })
+    }
+  })
+
+  const loginWithPassword = () => pushModal(LogInPassword)
 
   const loginWithBunker = () => pushModal(LogInBunker)
 
-  let loading = false
-  // let signers: any[] = []
-  // let hasNativeSigner = Boolean(getNip07())
+  let signers: any[] = []
+  let loading: string | undefined
+
+  $: hasSigner = getNip07() || signers.length > 0
 
   onMount(async () => {
     if (Capacitor.isNativePlatform()) {
-      // signers = await getNip55()
-      // if (signers.length > 0) {
-      //   hasNativeSigner = true
-      // }
+      signers = await getNip55()
     }
   })
 </script>
@@ -85,12 +86,12 @@
   <h1 class="heading">Log in with Nostr</h1>
   <p class="m-auto max-w-sm text-center">
     {PLATFORM_NAME} is built using the
-    <Button class="link" on:click={() => pushModal(InfoNostr)}>nostr protocol</Button>
-    , which allows you to own your social identity.
+    <Button class="link" on:click={() => pushModal(InfoNostr)}>nostr protocol</Button>, which allows you to own your
+    social identity.
   </p>
   {#if getNip07()}
     <Button disabled={loading} on:click={loginWithNip07} class="btn btn-primary">
-      {#if loading}
+      {#if loading === "nip07"}
         <span class="loading loading-spinner mr-3" />
       {:else}
         <Icon icon="widget" />
@@ -99,41 +100,63 @@
     </Button>
   {:else}
     <p>
-      To be part of this pre-alfa test you need to download and configure the nos2x extension, you
-      can do it
-      <Link
-        class="link"
-        external
-        href="https://chromewebstore.google.com/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp"
-        >here</Link>
+      To be part of this pre-alfa test you need to download and configure the nos2x extension, you can do it
+      <Link class="link" external href="https://chromewebstore.google.com/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp"
+        >here</Link
+      >
     </p>
   {/if}
-  <!--{#each signers as app}-->
-  <!--  <Button disabled={loading} class="btn btn-primary" on:click={() => loginWithSigner(app)}>-->
-  <!--    {#if loading}-->
-  <!--      <span class="loading loading-spinner mr-3" />-->
-  <!--    {:else}-->
-  <!--      <img src={app.iconUrl} alt={app.name} width="20" height="20" />-->
-  <!--    {/if}-->
-  <!--    Log in with {app.name}-->
-  <!--  </Button>-->
-  <!--{/each}-->
-  <Button disabled={loading} on:click={loginWithBunker} class="btn {'btn-neutral'}">
-    <!--    class="btn {hasNativeSigner ? 'btn-neutral' : 'btn-primary'}">-->
-
+  {#each signers as app}
+    <Button disabled={loading} class="btn btn-primary" on:click={() => loginWithNip55(app)}>
+      {#if loading === "nip55"}
+        <span class="loading loading-spinner mr-3" />
+      {:else}
+        <img src={app.iconUrl} alt={app.name} width="20" height="20" />
+      {/if}
+      Log in with {app.name}
+    </Button>
+  {/each}
+  {#if BURROW_URL && !hasSigner}
+    <Button disabled={loading} on:click={loginWithPassword} class="btn btn-primary">
+      {#if loading === "password"}
+        <span class="loading loading-spinner mr-3" />
+      {:else}
+        <Icon icon="key" />
+      {/if}
+      Log in with Password
+    </Button>
+  {/if}
+  <Button
+    disabled={loading}
+    on:click={loginWithBunker}
+    class="btn {hasSigner || BURROW_URL ? 'btn-neutral' : 'btn-primary'}"
+  >
     <Icon icon="cpu" />
     Log in with Remote Signer
   </Button>
-  <!--<Link-->
-  <!--  external-->
-  <!--  disabled={loading}-->
-  <!--  href="https://nostrapps.com#signers"-->
-  <!--  class="btn {hasNativeSigner ? '' : 'btn-neutral'}">-->
-  <!--  <Icon icon="compass" />-->
-  <!--  Browse Signer Apps-->
-  <!--</Link>-->
-  <!--<div class="text-sm">-->
-  <!--  Need an account?-->
-  <!--  <Button class="link" on:click={signUp}>Register instead</Button>-->
-  <!--</div>-->
+  {#if BURROW_URL && hasSigner}
+    <Button disabled={loading} on:click={loginWithPassword} class="btn">
+      {#if loading === "password"}
+        <span class="loading loading-spinner mr-3" />
+      {:else}
+        <Icon icon="key" />
+      {/if}
+      Log in with Password
+    </Button>
+  {/if}
+  {#if !hasSigner || !BURROW_URL}
+    <Link
+      external
+      disabled={loading}
+      href="https://nostrapps.com#signers"
+      class="btn {hasSigner || BURROW_URL ? '' : 'btn-neutral'}"
+    >
+      <Icon icon="compass" />
+      Browse Signer Apps
+    </Link>
+  {/if}
+  <div class="text-sm">
+    Need an account?
+    <Button class="link" on:click={signUp}>Register instead</Button>
+  </div>
 </div>

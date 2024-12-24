@@ -16,9 +16,7 @@
 <div class="column gap-4">
   <ModalHeader>
     <div slot="title">Add a Space</div>
-    <div slot="info">
-      Spaces are places where communities come together to work, play, and hang out.
-    </div>
+    <div slot="info">Spaces are places where communities come together to work, play, and hang out.</div>
   </ModalHeader>
   <Link href="/discover">
     <CardButton class="!btn-primary">

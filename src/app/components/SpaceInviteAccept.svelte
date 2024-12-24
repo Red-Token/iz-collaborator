@@ -23,7 +23,7 @@
     goto(makeSpacePath(url), {replaceState: true})
 
     pushToast({
-      message: "Welcome to the space!",
+      message: "Welcome to the space!"
     })
   }
 
@@ -42,7 +42,7 @@
       pushModal(Confirm, {
         confirm: () => confirm(url),
         message: `This space does not appear to limit who can post to it. This can result
-                  in a large amount of spam or other objectionable content. Continue?`,
+                  in a large amount of spam or other objectionable content. Continue?`
       })
     } else {
       await confirm(url)

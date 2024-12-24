@@ -31,6 +31,7 @@
   on:touchstart={onTouchStart}
   on:touchmove={onTouchMove}
   on:touchend={onTouchEnd}
-  {...$$props}>
+  {...$$props}
+>
   <slot />
 </div>

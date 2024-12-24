@@ -1,9 +1,8 @@
 <svelte:options accessors />
 
 <script lang="ts">
-  import {throttle} from "throttle-debounce"
   import {fly, slide} from "svelte/transition"
-  import {clamp} from "@welshman/lib"
+  import {clamp, throttle} from "@welshman/lib"
   import Icon from "@lib/components/Icon.svelte"
   import {theme} from "@app/theme"
 
@@ -66,12 +65,14 @@
     bind:this={element}
     transition:fly|local={{duration: 200}}
     class="mt-2 max-h-[350px] overflow-y-auto overflow-x-hidden shadow-xl {$$props.class} bg-alt"
-    style={$$props.style}>
+    style={$$props.style}
+  >
     {#if term && allowCreate && !items.includes(term)}
       <button
         class="white-space-nowrap block w-full min-w-0 cursor-pointer overflow-x-hidden text-ellipsis px-4 py-2 text-left transition-all hover:brightness-150"
         on:mousedown|preventDefault
-        on:click|preventDefault={() => select(term)}>
+        on:click|preventDefault={() => select(term)}
+      >
         Use "<svelte:component this={component} value={term} />"
       </button>
     {/if}
@@ -79,7 +80,8 @@
       <button
         class="white-space-nowrap block flex w-full min-w-0 cursor-pointer items-center overflow-x-hidden text-ellipsis px-4 py-2 text-left transition-all hover:brightness-150"
         on:mousedown|preventDefault
-        on:click|preventDefault={() => select(value)}>
+        on:click|preventDefault={() => select(value)}
+      >
         {#if index === i}
           <div transition:slide|local={{axis: "x"}} class="flex items-center pr-2">
             <Icon icon="alt-arrow-right" />

@@ -48,8 +48,7 @@ export default [
 			"@typescript-eslint/no-unused-vars": [
 				"error",
 				{args: "none", destructuredArrayIgnorePattern: "^_d?$", caughtErrors: "none"}
-			],
-			"brace-style": ["error", "1tbs", "stroustrup", "allman", {allowSingleLine: true}]
+			]
 		}
 	}
 ]

@@ -1,5 +1,5 @@
 import {get} from "svelte/store"
-import {ctx, uniq, sleep, chunk, equals, choice} from "@welshman/lib"
+import {ctx, sample, uniq, sleep, chunk, equals, choice} from "@welshman/lib"
 import {
   DELETE,
   PROFILE,
@@ -8,6 +8,12 @@ import {
   FOLLOWS,
   REACTION,
   AUTH_JOIN,
+  GROUP_JOIN,
+  GROUP_LEAVE,
+  GROUP_CREATE,
+  GROUP_EDIT_META,
+  GROUPS,
+  COMMENT,
   isSignedEvent,
   createEvent,
   displayProfile,
@@ -15,16 +21,16 @@ import {
   makeList,
   addToListPublicly,
   removeFromListByPredicate,
+  getTag,
   getListTags,
   getRelayTags,
   isShareableRelayUrl,
-  getRelayTagValues,
+  getRelayTagValues
 } from "@welshman/util"
 import type {TrustedEvent, EventTemplate, List} from "@welshman/util"
-import type {SubscribeRequestWithHandlers, Subscription} from "@welshman/net"
-import {PublishStatus, AuthStatus, SocketStatus, SubscriptionEvent} from "@welshman/net"
+import type {SubscribeRequestWithHandlers} from "@welshman/net"
+import {PublishStatus, AuthStatus, SocketStatus} from "@welshman/net"
 import {Nip59, makeSecret, stamp, Nip46Broker} from "@welshman/signer"
-import type {Nip46Handler} from "@welshman/signer"
 import {
   pubkey,
   signer,
@@ -46,19 +52,20 @@ import {
   nip44EncryptToSelf,
   loadRelay,
   addSession,
-  nip46Perms,
-  subscribe,
+  clearStorage,
+  dropSession
 } from "@welshman/app"
+import type {Thunk} from "@welshman/app"
 import {
-  COMMENT,
   tagRoom,
+  PROTECTED,
   userMembership,
-  MEMBERSHIPS,
   INDEXER_RELAYS,
+  NIP46_PERMS,
   loadMembership,
   loadSettings,
   getDefaultPubkeys,
-  getMembershipUrls,
+  userRoomsByUrl
 } from "@app/state"
 
 // Utils
@@ -82,85 +89,98 @@ export const makeMention = (pubkey: string, hints?: string[]) => [
   "p",
   pubkey,
   choice(hints || getPubkeyHints(pubkey)),
-  getPubkeyPetname(pubkey),
+  getPubkeyPetname(pubkey)
 ]
 
 export const makeIMeta = (url: string, data: Record<string, string>) => [
   "imeta",
   `url ${url}`,
-  ...Object.entries(data).map(([k, v]) => [k, v].join(" ")),
+  ...Object.entries(data).map(([k, v]) => [k, v].join(" "))
 ]
 
-export const subscribePersistent = (request: SubscribeRequestWithHandlers) => {
-  let sub: Subscription
-  let done = false
+export const getThunkError = async (thunk: Thunk) => {
+  const result = await thunk.result
+  const [{status, message}] = Object.values(result) as any
 
-  const start = async () => {
-    // If the subscription gets closed quickly, don't start flapping
-    await Promise.all([
-      sleep(30_000),
-      new Promise(resolve => {
-        sub = subscribe(request)
-        sub.emitter.on(SubscriptionEvent.Complete, resolve)
-      }),
-    ])
-
-    if (!done) {
-      start()
-    }
-  }
-
-  start()
-
-  return () => {
-    done = true
-    sub?.close()
+  if (status !== PublishStatus.Success) {
+    return message
   }
 }
 
 // Log in
 
-export const loginWithNip46 = async (token: string, handler: Nip46Handler) => {
-  const secret = makeSecret()
-  const broker = Nip46Broker.get({secret, handler})
-  const result = await broker.connect(token, nip46Perms)
+export const loginWithNip46 = async ({
+  relays,
+  signerPubkey,
+  clientSecret = makeSecret(),
+  connectSecret = ""
+}: {
+  relays: string[]
+  signerPubkey: string
+  clientSecret?: string
+  connectSecret?: string
+}) => {
+  const broker = Nip46Broker.get({relays, clientSecret, signerPubkey})
+  const result = await broker.connect("", connectSecret, NIP46_PERMS)
 
-  if (!result) return false
+  // TODO: remove ack result
+  if (!["ack", connectSecret].includes(result)) return false
 
   const pubkey = await broker.getPublicKey()
 
   if (!pubkey) return false
 
-  addSession({method: "nip46", pubkey, secret, handler})
+  await loadUserData(pubkey)
+
+  const handler = {relays, pubkey: signerPubkey}
+
+  addSession({method: "nip46", pubkey, secret: clientSecret, handler})
 
   return true
 }
 
+// Log out
+
+export const logout = async () => {
+  const $pubkey = pubkey.get()
+
+  if ($pubkey) {
+    dropSession($pubkey)
+  }
+
+  await clearStorage()
+
+  localStorage.clear()
+}
+
 // Loaders
 
-export const loadUserData = (
-  pubkey: string,
-  request: Partial<SubscribeRequestWithHandlers> = {},
-) => {
-  const promise = Promise.all([
-    loadInboxRelaySelections(pubkey, request),
-    loadMembership(pubkey, request),
-    loadSettings(pubkey, request),
-    loadProfile(pubkey, request),
-    loadFollows(pubkey, request),
-    loadMutes(pubkey, request),
+export const loadUserData = (pubkey: string, request: Partial<SubscribeRequestWithHandlers> = {}) => {
+  const promise = Promise.race([
+    sleep(3000),
+    Promise.all([
+      loadInboxRelaySelections(pubkey, request),
+      loadMembership(pubkey, request),
+      loadSettings(pubkey, request),
+      loadProfile(pubkey, request),
+      loadFollows(pubkey, request),
+      loadMutes(pubkey, request)
+    ])
   ])
 
-  // Load followed profiles slowly in the background without clogging other stuff up
+  // Load followed profiles slowly in the background without clogging other stuff up. Only use a single
+  // indexer relay to avoid too many redundant validations, which slow things down and eat bandwidth
   promise.then(async () => {
     for (const pubkeys of chunk(50, getDefaultPubkeys())) {
-      await sleep(300)
+      const relays = sample(1, INDEXER_RELAYS)
+
+      await sleep(1000)
 
       for (const pubkey of pubkeys) {
-        loadMembership(pubkey)
-        loadProfile(pubkey)
-        loadFollows(pubkey)
-        loadMutes(pubkey)
+        loadMembership(pubkey, {relays})
+        loadProfile(pubkey, {relays})
+        loadFollows(pubkey, {relays})
+        loadMutes(pubkey, {relays})
       }
     }
   })
@@ -185,10 +205,37 @@ export const broadcastUserData = async (relays: string[]) => {
   }
 }
 
+// NIP 29 stuff
+
+export const nip29 = {
+  createRoom: (url: string, room: string) => {
+    const event = createEvent(GROUP_CREATE, {tags: [tagRoom(room, url)]})
+
+    return publishThunk({event, relays: [url]})
+  },
+  editMeta: (url: string, room: string, meta: Record<string, string>) => {
+    const event = createEvent(GROUP_EDIT_META, {
+      tags: [tagRoom(room, url), ...Object.entries(meta)]
+    })
+
+    return publishThunk({event, relays: [url]})
+  },
+  joinRoom: (url: string, room: string) => {
+    const event = createEvent(GROUP_JOIN, {tags: [tagRoom(room, url)]})
+
+    return publishThunk({event, relays: [url]})
+  },
+  leaveRoom: (url: string, room: string) => {
+    const event = createEvent(GROUP_LEAVE, {tags: [tagRoom(room, url)]})
+
+    return publishThunk({event, relays: [url]})
+  }
+}
+
 // List updates
 
 export const addSpaceMembership = async (url: string) => {
-  const list = get(userMembership) || makeList({kind: MEMBERSHIPS})
+  const list = get(userMembership) || makeList({kind: GROUPS})
   const event = await addToListPublicly(list, ["r", url]).reconcile(nip44EncryptToSelf)
   const relays = uniq([...ctx.app.router.FromUser().getUrls(), ...getRelayTagValues(event.tags)])
 
@@ -196,35 +243,31 @@ export const addSpaceMembership = async (url: string) => {
 }
 
 export const removeSpaceMembership = async (url: string) => {
-  const list = get(userMembership) || makeList({kind: MEMBERSHIPS})
+  const list = get(userMembership) || makeList({kind: GROUPS})
   const pred = (t: string[]) => t[t[0] === "r" ? 1 : 2] === url
   const event = await removeFromListByPredicate(list, pred).reconcile(nip44EncryptToSelf)
-  const relays = uniq([
-    url,
-    ...ctx.app.router.FromUser().getUrls(),
-    ...getRelayTagValues(event.tags),
-  ])
+  const relays = uniq([url, ...ctx.app.router.FromUser().getUrls(), ...getRelayTagValues(event.tags)])
 
   return publishThunk({event, relays})
 }
 
-export const addRoomMembership = async (url: string, room: string) => {
-  const list = get(userMembership) || makeList({kind: MEMBERSHIPS})
-  const event = await addToListPublicly(list, tagRoom(room, url)).reconcile(nip44EncryptToSelf)
+export const addRoomMembership = async (url: string, room: string, name: string) => {
+  const list = get(userMembership) || makeList({kind: GROUPS})
+  const newTags = [
+    ["r", url],
+    ["group", room, url, name]
+  ]
+  const event = await addToListPublicly(list, ...newTags).reconcile(nip44EncryptToSelf)
   const relays = uniq([...ctx.app.router.FromUser().getUrls(), ...getRelayTagValues(event.tags)])
 
   return publishThunk({event, relays})
 }
 
 export const removeRoomMembership = async (url: string, room: string) => {
-  const list = get(userMembership) || makeList({kind: MEMBERSHIPS})
-  const pred = (t: string[]) => equals(tagRoom(room, url), t)
+  const list = get(userMembership) || makeList({kind: GROUPS})
+  const pred = (t: string[]) => equals(["group", room, url], t.slice(0, 3))
   const event = await removeFromListByPredicate(list, pred).reconcile(nip44EncryptToSelf)
-  const relays = uniq([
-    url,
-    ...ctx.app.router.FromUser().getUrls(),
-    ...getRelayTagValues(event.tags),
-  ])
+  const relays = uniq([url, ...ctx.app.router.FromUser().getUrls(), ...getRelayTagValues(event.tags)])
 
   return publishThunk({event, relays})
 }
@@ -243,12 +286,7 @@ export const setRelayPolicy = (url: string, read: boolean, write: boolean) => {
 
   return publishThunk({
     event: createEvent(list.kind, {tags}),
-    relays: [
-      url,
-      ...INDEXER_RELAYS,
-      ...ctx.app.router.FromUser().getUrls(),
-      ...getMembershipUrls(userMembership.get()),
-    ],
+    relays: [url, ...INDEXER_RELAYS, ...ctx.app.router.FromUser().getUrls(), ...userRoomsByUrl.get().keys()]
   })
 }
 
@@ -265,11 +303,7 @@ export const setInboxRelayPolicy = (url: string, enabled: boolean) => {
 
     return publishThunk({
       event: createEvent(list.kind, {tags}),
-      relays: [
-        ...INDEXER_RELAYS,
-        ...ctx.app.router.FromUser().getUrls(),
-        ...getMembershipUrls(userMembership.get()),
-      ],
+      relays: [...INDEXER_RELAYS, ...ctx.app.router.FromUser().getUrls(), ...userRoomsByUrl.get().keys()]
     })
   }
 }
@@ -283,7 +317,7 @@ export const checkRelayAccess = async (url: string, claim = "") => {
 
   const thunk = publishThunk({
     event: createEvent(AUTH_JOIN, {tags: [["claim", claim]]}),
-    relays: [url],
+    relays: [url]
   })
 
   const result = await thunk.result
@@ -294,7 +328,11 @@ export const checkRelayAccess = async (url: string, claim = "") => {
       result[url].message?.replace(/^.*: /, "") ||
       "join request rejected"
 
-    return `Failed to join relay (${message})`
+    // If it's a strict NIP 29 relay don't worry about requesting access
+    // TODO: remove this if relay29 ever gets less strict
+    if (message !== "missing group (`h`) tag") {
+      return `Failed to join relay (${message})`
+    }
   }
 }
 
@@ -334,7 +372,7 @@ export const attemptRelayAccess = async (url: string, claim = "") => {
     () => checkRelayProfile(url),
     () => checkRelayConnection(url),
     () => checkRelayAccess(url, claim),
-    () => checkRelayAuth(url),
+    () => checkRelayAuth(url)
   ]
 
   for (const check of checks) {
@@ -351,7 +389,7 @@ export const attemptRelayAccess = async (url: string, claim = "") => {
 export const sendWrapped = async ({
   template,
   pubkeys,
-  delay,
+  delay
 }: {
   template: EventTemplate
   pubkeys: string[]
@@ -364,20 +402,43 @@ export const sendWrapped = async ({
       uniq(pubkeys).map(async recipient => ({
         event: await nip59.wrap(recipient, stamp(template)),
         relays: ctx.app.router.PubkeyInbox(recipient).getUrls(),
-        delay,
-      })),
-    ),
+        delay
+      }))
+    )
   )
 }
+
+export const makeDelete = ({event}: {event: TrustedEvent}) => {
+  const tags = [["k", String(event.kind)], ...tagEvent(event)]
+  const groupTag = getTag("h", event.tags)
+
+  if (groupTag) {
+    tags.push(PROTECTED)
+    tags.push(groupTag)
+  }
+
+  return createEvent(DELETE, {tags})
+}
+
+export const publishDelete = ({relays, event}: {relays: string[]; event: TrustedEvent}) =>
+  publishThunk({event: makeDelete({event}), relays})
 
 export type ReactionParams = {
   event: TrustedEvent
   content: string
-  tags?: string[][]
 }
 
-export const makeReaction = ({event, content, tags = []}: ReactionParams) =>
-  createEvent(REACTION, {content, tags: [...tags, ...tagReactionTo(event)]})
+export const makeReaction = ({event, content}: ReactionParams) => {
+  const tags = [["k", String(event.kind)], ...tagReactionTo(event)]
+  const groupTag = getTag("h", event.tags)
+
+  if (groupTag) {
+    tags.push(PROTECTED)
+    tags.push(groupTag)
+  }
+
+  return createEvent(REACTION, {content, tags})
+}
 
 export const publishReaction = ({relays, ...params}: ReactionParams & {relays: string[]}) =>
   publishThunk({event: makeReaction(params), relays})
@@ -406,19 +467,13 @@ export const makeComment = ({event, content, tags = []}: ReplyParams) => {
   if (seenRoots.size === 0) {
     tags.push(["K", String(event.kind)])
     tags.push(["E", event.id])
-  } else {
-    tags.push(["k", String(event.kind)])
-    tags.push(["e", event.id])
   }
+
+  tags.push(["k", String(event.kind)])
+  tags.push(["e", event.id])
 
   return createEvent(COMMENT, {content, tags})
 }
 
 export const publishComment = ({relays, ...params}: ReplyParams & {relays: string[]}) =>
   publishThunk({event: makeComment(params), relays})
-
-export const makeDelete = ({event}: {event: TrustedEvent}) =>
-  createEvent(DELETE, {tags: [["k", String(event.kind)], ...tagEvent(event)]})
-
-export const publishDelete = ({relays, event}: {relays: string[]; event: TrustedEvent}) =>
-  publishThunk({event: makeDelete({event}), relays})

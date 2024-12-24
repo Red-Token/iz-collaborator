@@ -8,7 +8,7 @@
     getReadRelayUrls,
     getWriteRelayUrls,
     relaySelections,
-    inboxRelaySelections,
+    inboxRelaySelections
   } from "@welshman/app"
   import Icon from "@lib/components/Icon.svelte"
   import Button from "@lib/components/Button.svelte"
@@ -25,19 +25,19 @@
   const addReadRelay = () =>
     pushModal(RelayAdd, {
       relays: readRelayUrls,
-      addRelay: (url: string) => setRelayPolicy(url, true, $writeRelayUrls.includes(url)),
+      addRelay: (url: string) => setRelayPolicy(url, true, $writeRelayUrls.includes(url))
     })
 
   const addWriteRelay = () =>
     pushModal(RelayAdd, {
       relays: writeRelayUrls,
-      addRelay: (url: string) => setRelayPolicy(url, $readRelayUrls.includes(url), true),
+      addRelay: (url: string) => setRelayPolicy(url, $readRelayUrls.includes(url), true)
     })
 
   const addInboxRelay = () =>
     pushModal(RelayAdd, {
       relays: inboxRelayUrls,
-      addRelay: (url: string) => setInboxRelayPolicy(url, true),
+      addRelay: (url: string) => setInboxRelayPolicy(url, true)
     })
 
   const removeReadRelay = (url: string) => setRelayPolicy(url, false, $writeRelayUrls.includes(url))
@@ -58,9 +58,8 @@
       Outbox Relays
     </h2>
     <p slot="description" class="text-sm">
-      These relays will be advertised on your profile as places where you send your public notes. Be
-      sure to select relays that will accept your notes, and which will let people who follow you
-      read them.
+      These relays will be advertised on your profile as places where you send your public notes. Be sure to select
+      relays that will accept your notes, and which will let people who follow you read them.
     </p>
     <div class="column gap-2">
       {#each $writeRelayUrls.sort() as url (url)}
@@ -68,7 +67,8 @@
           <Button
             class="tooltip flex items-center"
             data-tip="Stop using this relay"
-            on:click={() => removeWriteRelay(url)}>
+            on:click={() => removeWriteRelay(url)}
+          >
             <Icon icon="close-circle" />
           </Button>
         </RelayItem>
@@ -87,8 +87,8 @@
       Inbox Relays
     </h2>
     <p slot="description" class="text-sm">
-      These relays will be advertised on your profile as places where other people should send notes
-      intended for you. Be sure to select relays that will accept notes that tag you.
+      These relays will be advertised on your profile as places where other people should send notes intended for you.
+      Be sure to select relays that will accept notes that tag you.
     </p>
     <div class="column gap-2">
       {#each $readRelayUrls.sort() as url (url)}
@@ -96,7 +96,8 @@
           <Button
             class="tooltip flex items-center"
             data-tip="Stop using this relay"
-            on:click={() => removeReadRelay(url)}>
+            on:click={() => removeReadRelay(url)}
+          >
             <Icon icon="close-circle" />
           </Button>
         </RelayItem>
@@ -115,9 +116,8 @@
       Messaging Relays
     </h2>
     <p slot="description" class="text-sm">
-      These relays will be advertised on your profile as places you use to send and receive direct
-      messages. Be sure to select relays that will accept your messages and messages from people
-      you'd like to be in contact with.
+      These relays will be advertised on your profile as places you use to send and receive direct messages. Be sure to
+      select relays that will accept your messages and messages from people you'd like to be in contact with.
     </p>
     <div class="column gap-2">
       {#each $inboxRelayUrls.sort() as url (url)}
@@ -125,7 +125,8 @@
           <Button
             class="tooltip flex items-center"
             data-tip="Stop using this relay"
-            on:click={() => removeInboxRelay(url)}>
+            on:click={() => removeInboxRelay(url)}
+          >
             <Icon icon="close-circle" />
           </Button>
         </RelayItem>

@@ -11,6 +11,7 @@
   import ModalHeader from "@lib/components/ModalHeader.svelte"
   import ModalFooter from "@lib/components/ModalFooter.svelte"
   import DateTimeInput from "@lib/components/DateTimeInput.svelte"
+  import {PROTECTED} from "@app/state"
   import {getPubkeyHints} from "@app/commands"
   import {getEditorOptions, getEditorTags} from "@lib/editor"
   import {pushToast} from "@app/toast"
@@ -25,14 +26,14 @@
     if (!title) {
       return pushToast({
         theme: "error",
-        message: "Please provide a title.",
+        message: "Please provide a title."
       })
     }
 
     if (!start || !end) {
       return pushToast({
         theme: "error",
-        message: "Please provide start and end times.",
+        message: "Please provide start and end times."
       })
     }
 
@@ -46,7 +47,8 @@
         ["start", dateToSeconds(start).toString()],
         ["end", dateToSeconds(end).toString()],
         ...getEditorTags($editor),
-      ],
+        PROTECTED
+      ]
     })
 
     publishThunk({event, relays: [url]})
@@ -80,16 +82,11 @@
   </Field>
   <Field>
     <p slot="label">Summary</p>
-    <div
-      slot="input"
-      class="border-base-100 bg-base-100 relative z-feature flex gap-2 border-t border-solid">
+    <div slot="input" class="relative z-feature flex gap-2 border-t border-solid border-base-100 bg-base-100">
       <div class="input-editor flex-grow overflow-hidden">
         <EditorContent editor={$editor} />
       </div>
-      <Button
-        data-tip="Add an image"
-        class="center btn tooltip"
-        on:click={$editor.commands.selectFiles}>
+      <Button data-tip="Add an image" class="center btn tooltip" on:click={$editor.commands.selectFiles}>
         {#if $loading}
           <span class="loading loading-spinner loading-xs"></span>
         {:else}

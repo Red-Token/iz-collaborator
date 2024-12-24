@@ -5,6 +5,7 @@
   import {max} from "@welshman/lib"
   import {deriveEvents, deriveIsDeleted} from "@welshman/store"
   import type {TrustedEvent} from "@welshman/util"
+  import {COMMENT} from "@welshman/util"
   import {thunks, load, pubkey, repository, formatTimestampRelative} from "@welshman/app"
   import Icon from "@lib/components/Icon.svelte"
   import Tippy from "@lib/components/Tippy.svelte"
@@ -14,9 +15,8 @@
   import ThunkStatus from "@app/components/ThunkStatus.svelte"
   import ThreadMenu from "@app/components/ThreadMenu.svelte"
   import {publishDelete, publishReaction} from "@app/commands"
-  import {deriveNotification} from "@app/notifications"
+  import {notifications} from "@app/notifications"
   import {makeSpacePath} from "@app/routes"
-  import {COMMENT} from "@app/state"
 
   export let url
   export let event
@@ -27,7 +27,6 @@
   const path = makeSpacePath(url, "threads", event.id)
   const filters = [{kinds: [COMMENT], "#E": [event.id]}]
   const replies = deriveEvents(repository, {filters})
-  const notification = deriveNotification(path, filters, url)
 
   const showPopover = () => popover.show()
 
@@ -43,8 +42,7 @@
     }
   }
 
-  const onEmoji = (emoji: NativeEmoji) =>
-    publishReaction({event, relays: [url], content: emoji.unicode})
+  const onEmoji = (emoji: NativeEmoji) => publishReaction({event, content: emoji.unicode, relays: [url]})
 
   let popover: Instance
 
@@ -56,8 +54,8 @@
 </script>
 
 <div class="flex flex-wrap items-center justify-between gap-2">
-  <ReactionSummary relays={[url]} {event} {onReactionClick} />
   <div class="flex flex-grow flex-wrap justify-end gap-2">
+    <ReactionSummary relays={[url]} {event} {onReactionClick} reactionClass="tooltip-left" />
     {#if $deleted}
       <div class="btn btn-error btn-xs rounded-full">Deleted</div>
     {:else if thunk}
@@ -69,8 +67,8 @@
         <span>{$replies.length} {$replies.length === 1 ? "reply" : "replies"}</span>
       </div>
       <div class="btn btn-neutral btn-xs relative hidden rounded-full sm:flex">
-        {#if $notification}
-          <div class="bg-primary h-2 w-2 rounded-full" />
+        {#if $notifications.has(path)}
+          <div class="h-2 w-2 rounded-full bg-primary" />
         {/if}
         Active {formatTimestampRelative(lastActive)}
       </div>
@@ -83,7 +81,8 @@
         bind:popover
         component={ThreadMenu}
         props={{url, event, onClick: hidePopover}}
-        params={{trigger: "manual", interactive: true}}>
+        params={{trigger: "manual", interactive: true}}
+      >
         <Button class="btn join-item btn-neutral btn-xs" on:click={showPopover}>
           <Icon icon="menu-dots" size={4} />
         </Button>

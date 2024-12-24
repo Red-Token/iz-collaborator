@@ -27,6 +27,7 @@
     <canvas
       class="rounded-box"
       bind:this={canvas}
-      style={`transform-origin: top left; transform: scale(${scale}, ${scale})`} />
+      style={`transform-origin: top left; transform: scale(${scale}, ${scale})`}
+    />
   </div>
 </Button>

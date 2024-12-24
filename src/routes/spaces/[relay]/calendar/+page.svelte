@@ -14,7 +14,8 @@
   import EventItem from "@app/components/EventItem.svelte"
   import EventCreate from "@app/components/EventCreate.svelte"
   import {pushModal} from "@app/modal"
-  import {deriveEventsForUrl, pullConservatively, decodeRelay} from "@app/state"
+  import {deriveEventsForUrl, decodeRelay} from "@app/state"
+  import {pullConservatively} from "@app/requests"
   import {setChecked} from "@app/notifications"
 
   const url = decodeRelay($page.params.relay)
@@ -25,8 +26,7 @@
 
   const getEnd = (event: TrustedEvent) => parseInt(event.tags.find(t => t[0] === "end")?.[1] || "")
 
-  const getStart = (event: TrustedEvent) =>
-    parseInt(event.tags.find(t => t[0] === "start")?.[1] || "")
+  const getStart = (event: TrustedEvent) => parseInt(event.tags.find(t => t[0] === "start")?.[1] || "")
 
   const limit = 5
   let loading = true
@@ -43,8 +43,7 @@
 
       if (isNaN(start) || isNaN(end)) return r
 
-      const prevDateDisplay =
-        r.length > 0 ? formatTimestampAsDate(getStart(last(r).event)) : undefined
+      const prevDateDisplay = r.length > 0 ? formatTimestampAsDate(getStart(last(r).event)) : undefined
       const newDateDisplay = formatTimestampAsDate(start)
       const dateDisplay = prevDateDisplay === newDateDisplay ? undefined : newDateDisplay
 
@@ -99,7 +98,8 @@
   <Button
     class="tooltip tooltip-left fixed bottom-16 right-2 z-feature p-1 md:bottom-4 md:right-4"
     data-tip="Create an Event"
-    on:click={createEvent}>
+    on:click={createEvent}
+  >
     <div class="btn btn-circle btn-primary flex h-12 w-12 items-center justify-center">
       <Icon icon="calendar-add" />
     </div>

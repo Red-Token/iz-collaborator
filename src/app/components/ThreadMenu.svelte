@@ -1,4 +1,5 @@
 <script lang="ts">
+  import {COMMENT} from "@welshman/util"
   import {pubkey} from "@welshman/app"
   import Button from "@lib/components/Button.svelte"
   import Icon from "@lib/components/Icon.svelte"
@@ -6,7 +7,6 @@
   import ThreadShare from "@app/components/ThreadShare.svelte"
   import ConfirmDelete from "@app/components/ConfirmDelete.svelte"
   import {pushModal} from "@app/modal"
-  import {COMMENT} from "@app/state"
 
   export let url
   export let event
@@ -30,7 +30,7 @@
   }
 </script>
 
-<ul class="menu rounded-box bg-base-100 whitespace-nowrap p-2 shadow-xl">
+<ul class="menu whitespace-nowrap rounded-box bg-base-100 p-2 shadow-xl">
   {#if isRoot}
     <li>
       <Button on:click={share}>

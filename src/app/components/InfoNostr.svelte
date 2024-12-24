@@ -9,9 +9,8 @@
     <div slot="title">What is nostr?</div>
   </ModalHeader>
   <p>
-    <Link external href="https://nostr.com/" class="link">Nostr</Link> is way to build social apps that
-    talk to each other. Users own their social identity instead of renting it from a tech company, and
-    can take it with them.
+    <Link external href="https://nostr.com/" class="link">Nostr</Link> is way to build social apps that talk to each other.
+    Users own their social identity instead of renting it from a tech company, and can take it with them.
   </p>
   <p>
     If you'd like to learn more about what other apps exist in the nostr ecosystem, please visit <Link

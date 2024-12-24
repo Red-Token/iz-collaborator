@@ -24,7 +24,7 @@
       pushModal(Confirm, {
         confirm,
         message: `This space does not appear to limit who can post to it. This can result
-                  in a large amount of spam or other objectionable content. Continue?`,
+                  in a large amount of spam or other objectionable content. Continue?`
       })
     } else {
       confirm()
@@ -54,14 +54,11 @@
       <p>Oops! We ran into some problems:</p>
       <p class="card2 bg-alt">{error}</p>
       <p>
-        If you're not sure what the error message means, you may need to contact the space
-        administrator to get more information.
+        If you're not sure what the error message means, you may need to contact the space administrator to get more
+        information.
       </p>
     {:else}
-      <p>
-        Looking good, we were able to connect you to this space! Click below to continue when you're
-        ready.
-      </p>
+      <p>Looking good, we were able to connect you to this space! Click below to continue when you're ready.</p>
     {/if}
   </div>
   <ModalFooter>

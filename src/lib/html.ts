@@ -29,18 +29,10 @@ export type Scroller = {
   stop: () => void
 }
 
-export const createScroller = ({
-  onScroll,
-  element,
-  delay = 1000,
-  threshold = 2000,
-  reverse = false,
-}: ScrollerOpts) => {
+export const createScroller = ({onScroll, element, delay = 1000, threshold = 2000, reverse = false}: ScrollerOpts) => {
   let done = false
 
-  const container = element.classList.contains("scroll-container")
-    ? element
-    : element.closest(".scroll-container")
+  const container = element.classList.contains("scroll-container") ? element : element.closest(".scroll-container")
 
   const check = async () => {
     if (container) {
@@ -70,7 +62,7 @@ export const createScroller = ({
     check,
     stop: () => {
       done = true
-    },
+    }
   }
 }
 

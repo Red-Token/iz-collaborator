@@ -22,15 +22,14 @@
     }
   }
 
-  const onEmoji = (emoji: NativeEmoji) =>
-    publishReaction({event, relays: [url], content: emoji.unicode})
+  const onEmoji = (emoji: NativeEmoji) => publishReaction({event, content: emoji.unicode, relays: [url]})
 </script>
 
 <NoteCard {event} class="card2 bg-alt">
   <Content {event} expandMode="inline" />
   <div class="flex w-full justify-between gap-2">
-    <ReactionSummary relays={[url]} {event} {onReactionClick}>
-      <EmojiButton {onEmoji} class="btn btn-neutral btn-xs rounded-box h-[26px]">
+    <ReactionSummary relays={[url]} {event} {onReactionClick} reactionClass="tooltip-right">
+      <EmojiButton {onEmoji} class="btn btn-neutral btn-xs h-[26px] rounded-box">
         <Icon icon="smile-circle" size={4} />
       </EmojiButton>
     </ReactionSummary>

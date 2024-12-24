@@ -1,117 +1,152 @@
-<script lang="ts" context="module">
-  type Element = {
-    id: string
-    type: "date" | "note"
-    value: string | TrustedEvent
-    showPubkey: boolean
-  }
-</script>
-
 <script lang="ts">
+  import {nip19} from "nostr-tools"
   import {onMount, onDestroy} from "svelte"
+  import type {Readable} from "svelte/store"
+  import {derived} from "svelte/store"
+  import type {Editor} from "svelte-tiptap"
   import {page} from "$app/stores"
-  import {sortBy, append, now} from "@welshman/lib"
+  import {sleep, ctx} from "@welshman/lib"
   import type {TrustedEvent, EventContent} from "@welshman/util"
-  import {createEvent, DELETE} from "@welshman/util"
-  import {formatTimestampAsDate, publishThunk} from "@welshman/app"
+  import {throttled} from "@welshman/store"
+  import {createEvent, MESSAGE} from "@welshman/util"
+  import type {Subscription} from "@welshman/net"
+  import {formatTimestampAsDate, publishThunk, deriveRelay} from "@welshman/app"
   import {slide} from "@lib/transition"
+  import {createScroller, type Scroller} from "@lib/html"
   import Icon from "@lib/components/Icon.svelte"
   import Button from "@lib/components/Button.svelte"
   import Spinner from "@lib/components/Spinner.svelte"
   import PageBar from "@lib/components/PageBar.svelte"
   import Divider from "@lib/components/Divider.svelte"
   import MenuSpaceButton from "@app/components/MenuSpaceButton.svelte"
+  import ChannelName from "@app/components/ChannelName.svelte"
   import ChannelMessage from "@app/components/ChannelMessage.svelte"
   import ChannelCompose from "@app/components/ChannelCompose.svelte"
   import {
-    pullConservatively,
     userSettingValues,
-    userMembership,
     decodeRelay,
-    makeChannelId,
-    deriveChannel,
+    deriveEventsForUrl,
     GENERAL,
     tagRoom,
-    MESSAGE,
-    COMMENT,
-    getMembershipRoomsByUrl,
+    LEGACY_MESSAGE,
+    userRoomsByUrl,
+    displayChannel
   } from "@app/state"
   import {setChecked} from "@app/notifications"
-  import {addRoomMembership, removeRoomMembership, subscribePersistent} from "@app/commands"
+  import {nip29, addRoomMembership, removeRoomMembership, getThunkError} from "@app/commands"
+  import {listenForChannelMessages} from "@app/requests"
+  import {PROTECTED, hasNip29} from "@app/state"
   import {popKey} from "@app/implicit"
+  import {pushToast} from "@app/toast"
 
   const {room = GENERAL} = $page.params
   const content = popKey<string>("content") || ""
   const url = decodeRelay($page.params.relay)
-  const channel = deriveChannel(makeChannelId(url, room))
+  const relay = deriveRelay(url)
+  const legacyRoom = room === GENERAL ? "general" : room
+  const events = throttled(
+    300,
+    deriveEventsForUrl(url, [
+      {kinds: [MESSAGE], "#h": [room]},
+      {kinds: [LEGACY_MESSAGE], "#~": [legacyRoom]}
+    ])
+  )
 
   const assertEvent = (e: any) => e as TrustedEvent
+
+  const joinRoom = async () => {
+    if (hasNip29($relay)) {
+      const message = await getThunkError(nip29.joinRoom(url, room))
+
+      if (message && !message.includes("already")) {
+        return pushToast({theme: "error", message})
+      }
+    }
+
+    addRoomMembership(url, room, displayChannel(url, room))
+  }
+
+  const leaveRoom = () => {
+    if (hasNip29($relay)) {
+      nip29.leaveRoom(url, room)
+    }
+
+    removeRoomMembership(url, room)
+  }
+
+  const replyTo = (event: TrustedEvent) => {
+    const relays = ctx.app.router.Event(event).getUrls()
+    const nevent = nip19.neventEncode({...event, relays})
+
+    $editor.commands.insertNEvent({nevent})
+    $editor.commands.insertContent("\n")
+    $editor.commands.focus()
+  }
 
   const onSubmit = ({content, tags}: EventContent) =>
     publishThunk({
       relays: [url],
-      event: createEvent(MESSAGE, {content, tags: append(tagRoom(room, url), tags)}),
-      delay: $userSettingValues.send_delay,
+      event: createEvent(MESSAGE, {content, tags: [...tags, tagRoom(room, url), PROTECTED]}),
+      delay: $userSettingValues.send_delay
     })
 
-  let loading = true
-  let elements: Element[] = []
+  let limit = 30
+  let loading = sleep(5000)
+  let sub: Subscription
+  let element: HTMLElement
+  let scroller: Scroller
+  let editor: Readable<Editor>
 
-  $: {
-    elements = []
+  const elements = derived(events, $events => {
+    const $elements = []
 
     let previousDate
     let previousPubkey
 
-    for (const {event} of sortBy(m => m.event.created_at, $channel?.messages || [])) {
-      if (event.kind === COMMENT) {
-        continue
-      }
-
+    for (const event of $events.toReversed()) {
       const {id, pubkey, created_at} = event
       const date = formatTimestampAsDate(created_at)
 
       if (date !== previousDate) {
-        elements.push({type: "date", value: date, id: date, showPubkey: false})
+        $elements.push({type: "date", value: date, id: date, showPubkey: false})
       }
 
-      elements.push({
+      $elements.push({
         id,
         type: "note",
         value: event,
-        showPubkey: date !== previousDate || previousPubkey !== pubkey,
+        showPubkey: date !== previousDate || previousPubkey !== pubkey
       })
 
       previousDate = date
       previousPubkey = pubkey
     }
 
-    elements.reverse()
-  }
+    return $elements.reverse().slice(0, limit)
+  })
 
-  onMount(() => {
-    pullConservatively({
-      relays: [url],
-      filters: [{kinds: [MESSAGE, DELETE], "#~": [room]}],
+  onMount(async () => {
+    // Sveltekiiit
+    await sleep(100)
+
+    scroller = createScroller({
+      element,
+      delay: 300,
+      threshold: 3000,
+      onScroll: () => {
+        limit += 30
+        loading = sleep(5000)
+      }
     })
 
-    const unsub = subscribePersistent({
-      relays: [url],
-      filters: [{kinds: [MESSAGE, COMMENT], "#~": [room], since: now()}],
-    })
-
-    return () => {
-      unsub()
-    }
+    sub = listenForChannelMessages(url, room)
   })
 
   onDestroy(() => {
     setChecked($page.url.pathname)
+    scroller?.stop()
+    sub?.close()
   })
-
-  setTimeout(() => {
-    loading = false
-  }, 5000)
 </script>
 
 <div class="relative flex h-full flex-col">
@@ -119,16 +154,18 @@
     <div slot="icon" class="center">
       <Icon icon="hashtag" />
     </div>
-    <strong slot="title">{room}</strong>
+    <strong slot="title">
+      <ChannelName {url} {room} />
+    </strong>
     <div slot="action" class="row-2">
       {#if room !== GENERAL}
-        {#if getMembershipRoomsByUrl(url, $userMembership).includes(room)}
-          <Button class="btn btn-neutral btn-sm" on:click={() => removeRoomMembership(url, room)}>
+        {#if $userRoomsByUrl.get(url)?.has(room)}
+          <Button class="btn btn-neutral btn-sm" on:click={leaveRoom}>
             <Icon icon="arrows-a-logout-2" />
             Leave Room
           </Button>
         {:else}
-          <Button class="btn btn-neutral btn-sm" on:click={() => addRoomMembership(url, room)}>
+          <Button class="btn btn-neutral btn-sm" on:click={joinRoom}>
             <Icon icon="login-2" />
             Join Room
           </Button>
@@ -137,25 +174,23 @@
       <MenuSpaceButton {url} />
     </div>
   </PageBar>
-  <div class="-mt-2 flex flex-grow flex-col-reverse overflow-auto py-2">
-    {#each elements as { type, id, value, showPubkey } (id)}
+  <div class="scroll-container -mt-2 flex flex-grow flex-col-reverse overflow-auto py-2" bind:this={element}>
+    {#each $elements as { type, id, value, showPubkey } (id)}
       {#if type === "date"}
         <Divider>{value}</Divider>
       {:else}
-        <div in:slide>
-          <ChannelMessage {url} {room} event={assertEvent(value)} {showPubkey} />
+        <div in:slide class:-mt-4={!showPubkey}>
+          <ChannelMessage {url} {room} {replyTo} event={assertEvent(value)} {showPubkey} />
         </div>
       {/if}
     {/each}
     <p class="flex h-10 items-center justify-center py-20">
-      <Spinner {loading}>
-        {#if loading}
-          Looking for messages...
-        {:else}
-          End of message history
-        {/if}
-      </Spinner>
+      {#await loading}
+        <Spinner loading>Looking for messages...</Spinner>
+      {:then}
+        <Spinner>End of message history</Spinner>
+      {/await}
     </p>
   </div>
-  <ChannelCompose {content} {onSubmit} />
+  <ChannelCompose bind:editor {content} {onSubmit} />
 </div>

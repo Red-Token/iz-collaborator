@@ -23,7 +23,7 @@
         content: target,
         animation: "shift-away",
         appendTo: document.querySelector(".tippy-target")!,
-        ...params,
+        ...params
       })
 
       instance = new component({target, props})

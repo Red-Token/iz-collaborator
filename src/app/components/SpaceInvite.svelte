@@ -24,10 +24,7 @@
   $: invite = [displayRelayUrl(url), claim].filter(identity).join("|")
 
   onMount(async () => {
-    const [[event]] = await Promise.all([
-      load({filters: [{kinds: [AUTH_INVITE]}], relays: [url]}),
-      sleep(2000),
-    ])
+    const [[event]] = await Promise.all([load({filters: [{kinds: [AUTH_INVITE]}], relays: [url]}), sleep(2000)])
 
     claim = event?.tags.find(nthEq(0, "claim"))?.[1] || ""
     loading = false
@@ -60,8 +57,8 @@
           <p slot="info">
             This invite link can be used by clicking "Add Space" and pasting it there.
             {#if !claim}
-              This space did not issue a claim for this link, so additional steps might be required
-              for people using this invite link.
+              This space did not issue a claim for this link, so additional steps might be required for people using
+              this invite link.
             {/if}
           </p>
         </Field>

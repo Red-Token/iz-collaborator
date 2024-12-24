@@ -24,7 +24,7 @@
       delay: 300,
       onScroll: () => {
         limit += 20
-      },
+      }
     })
 
     return () => {

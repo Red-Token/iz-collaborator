@@ -2,7 +2,7 @@
   import {onMount} from "svelte"
   import type {Readable} from "svelte/store"
   import {createEditor, type Editor, EditorContent} from "svelte-tiptap"
-  import {createEvent} from "@welshman/util"
+  import {createEvent, THREAD} from "@welshman/util"
   import {publishThunk} from "@welshman/app"
   import {isMobile} from "@lib/html"
   import Icon from "@lib/components/Icon.svelte"
@@ -11,7 +11,7 @@
   import ModalHeader from "@lib/components/ModalHeader.svelte"
   import ModalFooter from "@lib/components/ModalFooter.svelte"
   import {pushToast} from "@app/toast"
-  import {THREAD, GENERAL, tagRoom} from "@app/state"
+  import {GENERAL, tagRoom, PROTECTED} from "@app/state"
   import {getPubkeyHints} from "@app/commands"
   import {getEditorOptions, getEditorTags} from "@lib/editor"
 
@@ -25,7 +25,7 @@
     if (!title) {
       return pushToast({
         theme: "error",
-        message: "Please provide a title for your thread.",
+        message: "Please provide a title for your thread."
       })
     }
 
@@ -34,15 +34,15 @@
     if (!content.trim()) {
       return pushToast({
         theme: "error",
-        message: "Please provide a message for your thread.",
+        message: "Please provide a message for your thread."
       })
     }
 
-    const tags = [["title", title], tagRoom(GENERAL, url), ...getEditorTags($editor)]
+    const tags = [["title", title], tagRoom(GENERAL, url), ...getEditorTags($editor), PROTECTED]
 
     publishThunk({
       relays: [url],
-      event: createEvent(THREAD, {content, tags}),
+      event: createEvent(THREAD, {content, tags})
     })
 
     history.back()
@@ -54,9 +54,7 @@
   $: loading = $editor?.storage.fileUpload.loading
 
   onMount(() => {
-    editor = createEditor(
-      getEditorOptions({submit, getPubkeyHints, placeholder: "What's on your mind?"}),
-    )
+    editor = createEditor(getEditorOptions({submit, getPubkeyHints, placeholder: "What's on your mind?"}))
   })
 </script>
 
@@ -75,7 +73,8 @@
           bind:value={title}
           class="grow"
           type="text"
-          placeholder="What is this thread about?" />
+          placeholder="What is this thread about?"
+        />
       </label>
     </Field>
     <Field>
@@ -87,7 +86,8 @@
     <Button
       data-tip="Add an image"
       class="tooltip tooltip-left absolute bottom-1 right-2"
-      on:click={$editor.commands.selectFiles}>
+      on:click={$editor.commands.selectFiles}
+    >
       {#if $loading}
         <span class="loading loading-spinner loading-xs"></span>
       {:else}

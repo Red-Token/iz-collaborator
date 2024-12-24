@@ -20,6 +20,7 @@
   on:click|stopPropagation={go}
   class="cursor-pointer {$$props.class}"
   rel={external ? "noopener noreferer" : ""}
-  target={external ? "_blank" : ""}>
+  target={external ? "_blank" : ""}
+>
   <slot />
 </a>

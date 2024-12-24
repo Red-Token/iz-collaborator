@@ -2,21 +2,22 @@ import type {JSONContent, PasteRuleMatch, InputRuleMatch} from "@tiptap/core"
 import {Editor} from "@tiptap/core"
 import {ctx} from "@welshman/lib"
 import {Address} from "@welshman/util"
+import {repository} from "@welshman/app"
 
 export const asInline = (extend: Record<string, any>) => ({
   inline: true,
   group: "inline",
-  ...extend,
+  ...extend
 })
 
 export const createInputRuleMatch = <T extends Record<string, unknown>>(
   match: RegExpMatchArray,
-  data: T,
+  data: T
 ): InputRuleMatch => ({index: match.index!, text: match[0], match, data})
 
 export const createPasteRuleMatch = <T extends Record<string, unknown>>(
   match: RegExpMatchArray,
-  data: T,
+  data: T
 ): PasteRuleMatch => ({index: match.index!, text: match[0], match, data})
 
 export const findNodes = (type: string, json: JSONContent) => {
@@ -56,38 +57,34 @@ export const findMarks = (type: string, json: JSONContent) => {
 export const getEditorTags = (editor: Editor) => {
   const json = editor.getJSON()
 
-  const topicTags = findMarks("tag", json).map(({attrs}: any) => [
-    "t",
-    attrs.tag.replace(/^#/, "").toLowerCase(),
-  ])
+  const topicTags = findMarks("tag", json).map(({attrs}: any) => ["t", attrs.tag.replace(/^#/, "").toLowerCase()])
 
-  const naddrTags = findNodes("naddr", json).map(
-    ({attrs: {kind, pubkey, identifier, relays = []}}: any) => {
-      const address = new Address(kind, pubkey, identifier).toString()
+  const naddrTags = findNodes("naddr", json).map(({attrs: {kind, pubkey, identifier, relays = []}}: any) => {
+    const address = new Address(kind, pubkey, identifier).toString()
 
-      return ["q", address, ctx.app.router.FromRelays(relays).getUrl(), pubkey]
-    },
-  )
+    return ["q", address, ctx.app.router.FromRelays(relays).getUrl(), pubkey]
+  })
 
-  const neventTags = findNodes("nevent", json).map(({attrs: {id, author, relays = []}}: any) => [
-    "q",
-    id,
-    ctx.app.router.FromRelays(relays).getUrl(),
-    author || "",
-  ])
+  const neventTags = findNodes("nevent", json).map(({attrs: {id, author, relays = []}}: any) => {
+    const event = repository.getEvent(id)
+    const pubkey = author || repository.getEvent(id)?.pubkey || ""
+    const scenario = event ? ctx.app.router.Event(event) : ctx.app.router.FromPubkeys([pubkey])
+
+    return ["q", id, scenario.getUrl(), pubkey]
+  })
 
   const mentionTags = findNodes("nprofile", json).map(({attrs: {pubkey, relays = []}}: any) => [
     "p",
     pubkey,
     ctx.app.router.FromRelays(relays).getUrl(),
-    "",
+    ""
   ])
 
   const imetaTags = findNodes("image", json).map(({attrs: {src, sha256}}: any) => [
     "imeta",
     `url ${src}`,
     `x ${sha256}`,
-    `ox ${sha256}`,
+    `ox ${sha256}`
   ])
 
   return [...topicTags, ...naddrTags, ...neventTags, ...mentionTags, ...imetaTags]

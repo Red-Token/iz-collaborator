@@ -33,3 +33,6 @@ static/apple-touch-icon-180x180.png
 static/maskable-icon-512x512.png
 src/assets
 manifest.webmanifest
+
+Dockerfile
+debbuild.sh

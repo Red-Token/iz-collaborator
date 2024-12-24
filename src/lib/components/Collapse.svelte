@@ -14,7 +14,8 @@
     type="button"
     class="absolute right-8 top-8 h-4 w-4 cursor-pointer transition-all"
     class:rotate-90={!isOpen}
-    on:click={toggle}>
+    on:click={toggle}
+  >
     <Icon icon="alt-arrow-down" />
   </button>
   <slot name="title" />

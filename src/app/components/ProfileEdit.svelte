@@ -1,12 +1,6 @@
 <script lang="ts">
   import {ctx} from "@welshman/lib"
-  import {
-    createEvent,
-    makeProfile,
-    editProfile,
-    createProfile,
-    isPublishedProfile,
-  } from "@welshman/util"
+  import {createEvent, makeProfile, editProfile, createProfile, isPublishedProfile} from "@welshman/util"
   import {pubkey, profilesByPubkey, publishThunk} from "@welshman/app"
   import Icon from "@lib/components/Icon.svelte"
   import Field from "@lib/components/Field.svelte"
@@ -46,11 +40,7 @@
   </Field>
   <Field>
     <p slot="label">About You</p>
-    <textarea
-      class="textarea textarea-bordered leading-4"
-      rows="3"
-      bind:value={values.about}
-      slot="input" />
+    <textarea class="textarea textarea-bordered leading-4" rows="3" bind:value={values.about} slot="input" />
   </Field>
   <Field>
     <p slot="label">Nostr Address</p>

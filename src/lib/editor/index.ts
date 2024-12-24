@@ -17,36 +17,24 @@ import {
   NAddrExtension,
   ImageExtension,
   VideoExtension,
-  TagExtension,
+  TagExtension
 } from "nostr-editor"
 import type {StampedEvent} from "@welshman/util"
+import {toNostrURI} from "@welshman/util"
 import {signer, profileSearch} from "@welshman/app"
 import {FileUploadExtension} from "./FileUpload"
 import {createSuggestions} from "./Suggestions"
-import {LinkExtension} from "./LinkExtension"
 import EditMention from "./EditMention.svelte"
 import EditEvent from "./EditEvent.svelte"
 import EditImage from "./EditImage.svelte"
 import EditBolt11 from "./EditBolt11.svelte"
 import EditVideo from "./EditVideo.svelte"
-import EditLink from "./EditLink.svelte"
 import Suggestions from "./Suggestions.svelte"
 import SuggestionProfile from "./SuggestionProfile.svelte"
 import {asInline} from "./util"
 import {getSetting} from "@app/state"
 
-export {
-  createSuggestions,
-  LinkExtension,
-  EditMention,
-  EditEvent,
-  EditImage,
-  EditBolt11,
-  EditVideo,
-  EditLink,
-  Suggestions,
-  SuggestionProfile,
-}
+export {createSuggestions, EditMention, EditEvent, EditImage, EditBolt11, EditVideo, Suggestions, SuggestionProfile}
 export * from "./util"
 
 type UploadType = "nip96" | "blossom"
@@ -70,7 +58,7 @@ export const getEditorOptions = ({
   uploadType = getSetting("upload_type") as UploadType,
   defaultUploadUrl = getSetting("upload_type") == "nip96"
     ? (getSetting("nip96_urls") as string[])[0] || "https://nostr.build"
-    : (getSetting("blossom_urls") as string[])[0] || "https://cdn.satellite.earth",
+    : (getSetting("blossom_urls") as string[])[0] || "https://cdn.satellite.earth"
 }: EditorOptions) => ({
   autofocus,
   content: "",
@@ -104,14 +92,14 @@ export const getEditorOptions = ({
             }
 
             return this.editor.commands.setHardBreak()
-          },
+          }
         }
-      },
+      }
     }),
-    LinkExtension.extend({addNodeView: () => SvelteNodeViewRenderer(EditLink)}),
     Bolt11Extension.extend(asInline({addNodeView: () => SvelteNodeViewRenderer(EditBolt11)})),
     NProfileExtension.extend({
       addNodeView: () => SvelteNodeViewRenderer(EditMention),
+      renderText: props => toNostrURI(props.node.attrs.nprofile),
       addProseMirrorPlugins() {
         return [
           createSuggestions({
@@ -126,23 +114,35 @@ export const getEditorOptions = ({
               return props.command({pubkey, nprofile, relays})
             },
             suggestionComponent: SuggestionProfile,
-            suggestionsComponent: Suggestions,
-          }),
+            suggestionsComponent: Suggestions
+          })
         ]
-      },
+      }
     }),
-    NEventExtension.extend(asInline({addNodeView: () => SvelteNodeViewRenderer(EditEvent)})),
-    NAddrExtension.extend(asInline({addNodeView: () => SvelteNodeViewRenderer(EditEvent)})),
-    ImageExtension.extend(
-      asInline({addNodeView: () => SvelteNodeViewRenderer(EditImage)}),
-    ).configure({defaultUploadUrl, defaultUploadType: uploadType}),
-    VideoExtension.extend(
-      asInline({addNodeView: () => SvelteNodeViewRenderer(EditVideo)}),
-    ).configure({defaultUploadUrl, defaultUploadType: uploadType}),
+    NEventExtension.extend(
+      asInline({
+        addNodeView: () => SvelteNodeViewRenderer(EditEvent),
+        renderText: (props: any) => toNostrURI(props.node.attrs.nevent)
+      })
+    ),
+    NAddrExtension.extend(
+      asInline({
+        addNodeView: () => SvelteNodeViewRenderer(EditEvent),
+        renderText: (props: any) => toNostrURI(props.node.attrs.nevent)
+      })
+    ),
+    ImageExtension.extend(asInline({addNodeView: () => SvelteNodeViewRenderer(EditImage)})).configure({
+      defaultUploadUrl,
+      defaultUploadType: uploadType
+    }),
+    VideoExtension.extend(asInline({addNodeView: () => SvelteNodeViewRenderer(EditVideo)})).configure({
+      defaultUploadUrl,
+      defaultUploadType: uploadType
+    }),
     FileUploadExtension.configure({
       immediateUpload: true,
       allowedMimeTypes: ["image/*", "video/*"],
-      sign: (event: StampedEvent) => signer.get()!.sign(event),
-    }),
-  ],
+      sign: (event: StampedEvent) => signer.get()!.sign(event)
+    })
+  ]
 })

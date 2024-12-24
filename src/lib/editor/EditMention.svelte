@@ -17,7 +17,8 @@
   <Link
     external
     href={pubkeyLink(node.attrs.pubkey, node.attrs.relays)}
-    class={cx("link-content", {"link-content-selected": selected})}>
+    class={cx("link-content", {"link-content-selected": selected})}
+  >
     @{displayProfile($profile)}
   </Link>
 </NodeViewWrapper>

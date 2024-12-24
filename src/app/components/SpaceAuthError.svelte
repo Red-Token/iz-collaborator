@@ -22,7 +22,7 @@
     }
 
     pushToast({
-      message: "You have successfully joined the space!",
+      message: "You have successfully joined the space!"
     })
 
     clearModals()
@@ -48,7 +48,7 @@
     <div slot="info">We couldn't connect you to this space.</div>
   </ModalHeader>
   <p>We received an error from the relay indicating you don't have access to this space.</p>
-  <p class="border-error text-error border-l border-solid pl-4">
+  <p class="border-l border-solid border-error pl-4 text-error">
     {error}
   </p>
   <p>If you have one, you can try entering an invite code below to request access.</p>

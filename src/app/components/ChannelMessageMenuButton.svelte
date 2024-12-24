@@ -33,5 +33,6 @@
     bind:popover
     component={ChannelMessageMenu}
     props={{url, event, onClick}}
-    params={{trigger: "manual", interactive: true}} />
+    params={{trigger: "manual", interactive: true}}
+  />
 </div>

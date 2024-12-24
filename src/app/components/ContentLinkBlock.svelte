@@ -23,7 +23,7 @@
 </script>
 
 <Link external href={url} class="my-2 flex">
-  <div class="rounded-box overflow-hidden leading-[0]">
+  <div class="overflow-hidden rounded-box leading-[0]">
     {#if url.match(/\.(mov|webm|mp4)$/)}
       <video controls src={url} class="max-h-96 object-contain object-center">
         <track kind="captions" />
@@ -43,12 +43,12 @@
             <img
               alt="Link preview"
               src={imgproxy(preview.image)}
-              class="bg-alt max-h-72 object-contain object-center" />
+              class="bg-alt max-h-72 object-contain object-center"
+            />
           {/if}
           {#if preview.title}
             <div class="flex flex-col gap-2 p-4">
-              <strong class="overflow-hidden text-ellipsis whitespace-nowrap"
-                >{preview.title}</strong>
+              <strong class="overflow-hidden text-ellipsis whitespace-nowrap">{preview.title}</strong>
               <p>{ellipsize(preview.description, 140)}</p>
             </div>
           {/if}

@@ -2,7 +2,6 @@
   import {onMount} from "svelte"
   import type {Readable} from "svelte/store"
   import {createEditor, type Editor, EditorContent} from "svelte-tiptap"
-  import {append} from "@welshman/lib"
   import {isMobile} from "@lib/html"
   import {fly, slideAndFade} from "@lib/transition"
   import Icon from "@lib/components/Icon.svelte"
@@ -10,7 +9,7 @@
   import ModalFooter from "@lib/components/ModalFooter.svelte"
   import {getEditorOptions, getEditorTags} from "@lib/editor"
   import {getPubkeyHints, publishComment} from "@app/commands"
-  import {tagRoom, GENERAL} from "@app/state"
+  import {tagRoom, GENERAL, PROTECTED} from "@app/state"
   import {pushToast} from "@app/toast"
 
   export let url
@@ -22,12 +21,12 @@
     if ($loading) return
 
     const content = $editor.getText({blockSeparator: "\n"})
-    const tags = append(tagRoom(GENERAL, url), getEditorTags($editor))
+    const tags = [...getEditorTags($editor), tagRoom(GENERAL, url), PROTECTED]
 
     if (!content.trim()) {
       return pushToast({
         theme: "error",
-        message: "Please provide a message for your reply.",
+        message: "Please provide a message for your reply."
       })
     }
 
@@ -47,7 +46,8 @@
   in:fly
   out:slideAndFade
   on:submit|preventDefault={submit}
-  class="card2 bg-neutral sticky bottom-2 z-feature mx-2 mt-2">
+  class="card2 sticky bottom-2 z-feature mx-2 mt-4 bg-neutral"
+>
   <div class="relative">
     <div class="note-editor flex-grow overflow-hidden">
       <EditorContent editor={$editor} />
@@ -55,7 +55,8 @@
     <Button
       data-tip="Add an image"
       class="tooltip tooltip-left absolute bottom-1 right-2"
-      on:click={$editor.commands.selectFiles}>
+      on:click={$editor.commands.selectFiles}
+    >
       {#if $loading}
         <span class="loading loading-spinner loading-xs"></span>
       {:else}

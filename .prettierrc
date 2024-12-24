@@ -4,12 +4,10 @@
 	"bracketSameLine": false,
 	"svelteSortOrder": "options-styles-scripts-markup",
 	"arrowParens": "avoid",
-	"bracketSpacing": true,
+	"bracketSpacing": false,
 	"trailingComma": "none",
 	"plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
 	"overrides": [{"files": "*.svelte", "options": {"parser": "svelte"}}],
-	"tabWidth": 3,
-	"useTabs": true,
 	"endOfLine": "lf",
 	"proseWrap": "preserve"
 }

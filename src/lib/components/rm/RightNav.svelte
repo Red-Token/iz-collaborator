@@ -11,37 +11,37 @@
           name: "Sub Group",
           children: [
             {
-              name: "Item 1.1.1",
+              name: "Item 1.1.1"
             },
             {
-              name: "Item 1.1.2",
-            },
-          ],
+              name: "Item 1.1.2"
+            }
+          ]
         },
         {
-          name: "Group",
-        },
-      ],
+          name: "Group"
+        }
+      ]
     },
     {
       name: "Item 2",
       children: [
         {
-          name: "Item 2.1",
+          name: "Item 2.1"
         },
         {
-          name: "Item 2.2",
-        },
-      ],
+          name: "Item 2.2"
+        }
+      ]
     },
     {
-      name: "Item 3",
-    },
+      name: "Item 3"
+    }
   ]
 
   function onClick() {
     tree_data.push({
-      name: "Item 4",
+      name: "Item 4"
     })
 
     tree_data = tree_data

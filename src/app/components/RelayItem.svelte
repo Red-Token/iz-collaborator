@@ -26,13 +26,15 @@
   <span class="flex items-center gap-1 whitespace-nowrap text-sm">
     {#if $relay?.profile?.contact}
       <Link external class="ellipsize underline" href={$relay.profile.contact}
-        >{displayUrl($relay.profile.contact)}</Link>
+        >{displayUrl($relay.profile.contact)}</Link
+      >
       &bull;
     {/if}
     {#if $relay?.profile?.supported_nips}
       <span
         class="tooltip cursor-pointer underline"
-        data-tip="NIPs supported: {$relay.profile.supported_nips.join(', ')}">
+        data-tip="NIPs supported: {$relay.profile.supported_nips.join(', ')}"
+      >
         {$relay.profile.supported_nips.length} NIPs
       </span>
       &bull;

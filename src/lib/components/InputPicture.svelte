@@ -47,7 +47,7 @@
         () => {
           url = reader.result as string
         },
-        false,
+        false
       )
       reader.readAsDataURL(file)
     } else {
@@ -62,26 +62,29 @@
     for={id}
     aria-label="Drag and drop files here."
     style="background-image: url({url});"
-    class="border-base-content bg-base-300 relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-dashed bg-cover bg-center transition-all"
+    class="relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-base-content bg-base-300 bg-cover bg-center transition-all"
     class:border-primary={active}
     on:dragenter|preventDefault|stopPropagation={onDragEnter}
     on:dragover|preventDefault|stopPropagation={onDragOver}
     on:dragleave|preventDefault|stopPropagation={onDragLeave}
-    on:drop|preventDefault|stopPropagation={onDrop}>
+    on:drop|preventDefault|stopPropagation={onDrop}
+  >
     <div
-      class="bg-primary absolute right-0 top-0 h-5 w-5 overflow-hidden rounded-full"
+      class="absolute right-0 top-0 h-5 w-5 overflow-hidden rounded-full bg-primary"
       class:bg-error={file}
-      class:bg-primary={!file}>
+      class:bg-primary={!file}
+    >
       {#if file}
         <span
           role="button"
           tabindex="-1"
           on:mousedown|stopPropagation={onClear}
-          on:touchstart|stopPropagation={onClear}>
-          <Icon icon="close-circle" class="!bg-base-300 scale-150" />
+          on:touchstart|stopPropagation={onClear}
+        >
+          <Icon icon="close-circle" class="scale-150 !bg-base-300" />
         </span>
       {:else}
-        <Icon icon="add-circle" class="!bg-base-300 scale-150" />
+        <Icon icon="add-circle" class="scale-150 !bg-base-300" />
       {/if}
     </div>
     {#if !file}

@@ -21,16 +21,14 @@
   })
 </script>
 
-<div class="md:hero hidden min-h-screen">
+<div class="hidden min-h-screen md:hero">
   <div class="col-2 hero-content text-center">
     <p class="row-2 text-lg">
       <Icon icon="info-circle" />
       No conversation selected.
     </p>
     <p>
-      Click on a conversation in the sidebar, or <Button class="link" on:click={startChat}
-        >start a new one</Button
-      >.
+      Click on a conversation in the sidebar, or <Button class="link" on:click={startChat}>start a new one</Button>.
     </p>
   </div>
 </div>

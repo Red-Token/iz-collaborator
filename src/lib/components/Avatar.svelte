@@ -10,11 +10,13 @@
 {#if src}
   <div
     class={cx($$props.class, "shrink-0 overflow-hidden rounded-full bg-cover bg-center")}
-    style={`width: ${size * 4}px; height: ${size * 4}px; min-width: ${size * 4}px; background-image: url(${src}); ${$$props.style || ""}`} />
+    style={`width: ${size * 4}px; height: ${size * 4}px; min-width: ${size * 4}px; background-image: url(${src}); ${$$props.style || ""}`}
+  />
 {:else}
   <div
     class={cx($$props.class, "center !flex rounded-full")}
-    style={`width: ${size * 4}px; height: ${size * 4}px; min-width: ${size * 4}px; ${$$props.style || ""}`}>
+    style={`width: ${size * 4}px; height: ${size * 4}px; min-width: ${size * 4}px; ${$$props.style || ""}`}
+  >
     <Icon {icon} size={Math.round(size * 0.8)} />
   </div>
 {/if}

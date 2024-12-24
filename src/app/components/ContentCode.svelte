@@ -3,6 +3,6 @@
   export let isBlock
 </script>
 
-<code class="link-content w-full" class:block={isBlock}>
-  {value}
+<code class="w-full overflow-auto whitespace-pre rounded bg-neutral px-1 text-neutral-content" class:block={isBlock}>
+  {value.trim()}
 </code>

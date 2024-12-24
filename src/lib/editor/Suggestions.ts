@@ -37,7 +37,7 @@ export const createSuggestions = (options: SuggestionsOptions) =>
         .focus()
         .insertContentAt(range, [
           {type: options.name, attrs: props},
-          {type: "text", text: " "},
+          {type: "text", text: " "}
         ])
         .run()
 
@@ -58,7 +58,7 @@ export const createSuggestions = (options: SuggestionsOptions) =>
         search: options.search,
         allowCreate: options.allowCreate,
         component: options.suggestionComponent,
-        select: (value: string) => options.select(value, props),
+        select: (value: string) => options.select(value, props)
       })
 
       return {
@@ -72,7 +72,7 @@ export const createSuggestions = (options: SuggestionsOptions) =>
             showOnCreate: true,
             interactive: true,
             trigger: "manual",
-            placement: "bottom-start",
+            placement: "bottom-start"
           })
 
           suggestions = new options.suggestionsComponent({target, props: mapProps(props)})
@@ -82,7 +82,7 @@ export const createSuggestions = (options: SuggestionsOptions) =>
 
           if (props.clientRect) {
             popover[0].setProps({
-              getReferenceClientRect: props.clientRect as any,
+              getReferenceClientRect: props.clientRect as any
             })
           }
         },
@@ -98,7 +98,7 @@ export const createSuggestions = (options: SuggestionsOptions) =>
         onExit: () => {
           popover[0].destroy()
           suggestions.$destroy()
-        },
+        }
       }
-    },
+    }
   })

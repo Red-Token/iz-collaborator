@@ -17,14 +17,14 @@
   const onSubmit = async () => {
     publishThunk({
       event: createEvent(SETTINGS, {
-        content: await $signer!.nip04.encrypt($pubkey!, JSON.stringify(settings)),
+        content: await $signer!.nip04.encrypt($pubkey!, JSON.stringify(settings))
       }),
-      relays: ctx.app.router.FromUser().getUrls(),
+      relays: ctx.app.router.FromUser().getUrls()
     })
 
     publishThunk({
       event: createEvent(MUTES, {tags: mutedPubkeys.map(tagPubkey)}),
-      relays: ctx.app.router.FromUser().getUrls(),
+      relays: ctx.app.router.FromUser().getUrls()
     })
 
     pushToast({message: "Your settings have been saved!"})
@@ -39,22 +39,14 @@
     <p class="text-lg">Content Settings</p>
     <FieldInline>
       <p slot="label">Hide sensitive content?</p>
-      <input
-        slot="input"
-        type="checkbox"
-        class="toggle toggle-primary"
-        bind:checked={settings.hide_sensitive} />
+      <input slot="input" type="checkbox" class="toggle toggle-primary" bind:checked={settings.hide_sensitive} />
       <p slot="info">
         If content is marked by the author as sensitive, {PLATFORM_NAME} will hide it by default.
       </p>
     </FieldInline>
     <FieldInline>
       <p slot="label">Show media?</p>
-      <input
-        slot="input"
-        type="checkbox"
-        class="toggle toggle-primary"
-        bind:checked={settings.show_media} />
+      <input slot="input" type="checkbox" class="toggle toggle-primary" bind:checked={settings.show_media} />
       <p slot="info">Use this to disable link previews and image rendering.</p>
     </FieldInline>
     <Field>
@@ -73,7 +65,8 @@
         min="0"
         max="10000"
         step="1000"
-        bind:value={settings.send_delay} />
+        bind:value={settings.send_delay}
+      />
       <p slot="info">
         Delay sending chat messages for {settings.send_delay / 1000}
         {settings.send_delay === 1000 ? "second" : "seconds"}.

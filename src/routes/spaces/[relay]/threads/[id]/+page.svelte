@@ -1,8 +1,9 @@
 <script lang="ts">
   import {onMount} from "svelte"
-  import {sortBy, nthEq, sleep} from "@welshman/lib"
   import {page} from "$app/stores"
-  import {repository} from "@welshman/app"
+  import {sortBy, nthEq, sleep} from "@welshman/lib"
+  import {COMMENT} from "@welshman/util"
+  import {repository, subscribe} from "@welshman/app"
   import {deriveEvents} from "@welshman/store"
   import Icon from "@lib/components/Icon.svelte"
   import PageBar from "@lib/components/PageBar.svelte"
@@ -13,8 +14,7 @@
   import MenuSpaceButton from "@app/components/MenuSpaceButton.svelte"
   import ThreadActions from "@app/components/ThreadActions.svelte"
   import ThreadReply from "@app/components/ThreadReply.svelte"
-  import {COMMENT, deriveEvent, decodeRelay} from "@app/state"
-  import {subscribePersistent} from "@app/commands"
+  import {deriveEvent, decodeRelay} from "@app/state"
   import {setChecked} from "@app/notifications"
 
   const {relay, id} = $page.params
@@ -33,32 +33,37 @@
     showReply = false
   }
 
+  const expand = () => {
+    showAll = true
+  }
+
+  let showAll = false
   let showReply = false
 
   $: title = $event?.tags.find(nthEq(0, "title"))?.[1] || ""
 
   onMount(() => {
-    const unsub = subscribePersistent({relays: [url], filters})
+    const sub = subscribe({relays: [url], filters})
 
     return () => {
-      unsub()
+      sub.close()
       setChecked($page.url.pathname)
     }
   })
 </script>
 
 <div class="relative flex flex-col-reverse gap-3 px-2">
-  <div class="bg-neutral absolute left-[51px] top-32 h-[calc(100%-248px)] w-[2px]" />
+  <div class="absolute left-[51px] top-32 h-[calc(100%-248px)] w-[2px] bg-neutral" />
   {#if $event}
     {#if !showReply}
-      <div class="flex justify-end p-2">
+      <div class="flex justify-end px-2 pb-2">
         <Button class="btn btn-primary" on:click={openReply}>
           <Icon icon="reply" />
           Reply to thread
         </Button>
       </div>
     {/if}
-    {#each sortBy(e => -e.created_at, $replies) as reply (reply.id)}
+    {#each sortBy(e => -e.created_at, $replies).slice(0, showAll ? undefined : 4) as reply (reply.id)}
       <NoteCard event={reply} class="card2 bg-alt z-feature w-full">
         <div class="col-3 ml-12">
           <Content showEntire event={reply} />
@@ -66,9 +71,17 @@
         </div>
       </NoteCard>
     {/each}
+    {#if !showAll && $replies.length > 4}
+      <div class="flex justify-center">
+        <Button class="btn btn-link" on:click={expand}>
+          <Icon icon="sort-vertical" />
+          Show all {$replies.length} replies
+        </Button>
+      </div>
+    {/if}
     <NoteCard event={$event} class="card2 bg-alt z-feature w-full">
       <div class="col-3 ml-12">
-        <Content showEntire event={$event} />
+        <Content showEntire event={$event} quoteProps={{relays: [url]}} />
         <ThreadActions event={$event} {url} />
       </div>
     </NoteCard>

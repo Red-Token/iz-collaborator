@@ -6,7 +6,7 @@
     deriveProfile,
     deriveHandleForPubkey,
     displayHandle,
-    deriveProfileDisplay,
+    deriveProfileDisplay
   } from "@welshman/app"
   import Avatar from "@lib/components/Avatar.svelte"
   import WotScore from "@lib/components/WotScore.svelte"

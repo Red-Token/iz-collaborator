@@ -47,27 +47,20 @@ export const FileUploadExtension = Extension.create<FileUploadOptions>({
   addStorage() {
     return {
       loading: writable(false),
-      tags: [] as string[][],
+      tags: [] as string[][]
     }
   },
 
   addOptions() {
     return {
-      allowedMimeTypes: [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "video/mp4",
-        "video/mpeg",
-        "video/webm",
-      ],
+      allowedMimeTypes: ["image/jpeg", "image/png", "image/gif", "video/mp4", "video/mpeg", "video/webm"],
       immediateUpload: true,
       expiration: 60000,
       async hash(file: File) {
         return bufferToHex(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))
       },
       onDrop() {},
-      onComplete() {},
+      onComplete() {}
     }
   },
 
@@ -89,15 +82,13 @@ export const FileUploadExtension = Extension.create<FileUploadOptions>({
             if (!(node.type.name === "image" || node.type.name === "video")) {
               return
             }
-            const tag = props.editor.storage.fileUpload.tags.find((t: string[]) =>
-              t[1].includes(node.attrs.src),
-            )
+            const tag = props.editor.storage.fileUpload.tags.find((t: string[]) => t[1].includes(node.attrs.src))
             if (tag) {
               tags.push(tag)
             }
           })
           return tags
-        }) as any,
+        }) as any
     }
   },
 
@@ -121,22 +112,22 @@ export const FileUploadExtension = Extension.create<FileUploadOptions>({
               }
             })
             return {}
-          },
+          }
         },
         props: {
           handleDrop: (_, event) => {
             return uploader.handleDrop(event)
-          },
-        },
-      }),
+          }
+        }
+      })
     ]
-  },
+  }
 })
 
 class Uploader {
   constructor(
     public editor: Editor,
-    private options: FileUploadOptions,
+    private options: FileUploadOptions
   ) {}
 
   get view() {
@@ -144,9 +135,7 @@ class Uploader {
   }
 
   addFile(file: File, pos: number) {
-    if (
-      !this.options.allowedMimeTypes.some(amt => amt.split("*").every(s => file.type.includes(s)))
-    ) {
+    if (!this.options.allowedMimeTypes.some(amt => amt.split("*").every(s => file.type.includes(s)))) {
       return false
     }
     const {tr} = this.view.state
@@ -156,7 +145,7 @@ class Uploader {
       src: URL.createObjectURL(file),
       alt: "",
       uploading: false,
-      uploadError: null,
+      uploadError: null
     })
     tr.insert(pos, node)
     this.view.dispatch(tr)
@@ -203,9 +192,7 @@ class Uploader {
     const pos = this.findNodePosition(nodeRef)
     if (pos === -1) return
 
-    Object.entries(attrs).forEach(
-      ([key, value]) => value !== undefined && tr.setNodeAttribute(pos, key, value),
-    )
+    Object.entries(attrs).forEach(([key, value]) => value !== undefined && tr.setNodeAttribute(pos, key, value))
     this.view.dispatch(tr)
   }
 
@@ -216,7 +203,7 @@ class Uploader {
           uploading: false,
           src: response.url,
           sha256: response.sha256,
-          uploadError: response.error,
+          uploadError: response.error
         })
       }
     })
@@ -225,12 +212,7 @@ class Uploader {
   async upload(node: Node) {
     const {sign, hash, expiration} = this.options
 
-    const {
-      file,
-      alt,
-      uploadType,
-      uploadUrl: serverUrl,
-    } = node.attrs as ImageAttributes | VideoAttributes
+    const {file, alt, uploadType, uploadUrl: serverUrl} = node.attrs as ImageAttributes | VideoAttributes
 
     this.updateNodeAttributes(node, {uploading: true, uploadError: null})
 
@@ -248,7 +230,7 @@ class Uploader {
           `url ${res.url}`,
           `size ${res.size}`,
           `m ${res.type}`,
-          `x ${res.sha256}`,
+          `x ${res.sha256}`
         ])
         this.onUploadDone(node, res)
       }
@@ -320,7 +302,7 @@ export async function uploadNIP96(options: NIP96Options) {
     const res = await uploadFile(options.file, server.api_url, authorization, {
       alt: options.alt || "",
       expiration: options.expiration?.toString() || "",
-      content_type: options.file.type,
+      content_type: options.file.type
     })
     if (res.status === "error") {
       throw new Error(res.message)
@@ -330,7 +312,7 @@ export async function uploadNIP96(options: NIP96Options) {
     return {
       url,
       sha256,
-      tags: res.nip94_event?.tags.flatMap(item => item.join(" ")),
+      tags: res.nip94_event?.tags.flatMap(item => item.join(" "))
     }
   } catch (error) {
     console.warn(error)
@@ -374,8 +356,8 @@ export async function uploadBlossom(options: BlossomOptions) {
       ["t", "upload"],
       ["x", hash],
       ["size", options.file.size.toString()],
-      ["expiration", (created_at + (options.expiration || 60000)).toString()],
-    ],
+      ["expiration", (created_at + (options.expiration || 60000)).toString()]
+    ]
   })
   const data = JSON.stringify(event)
   const base64 = btoa(data)
@@ -384,8 +366,8 @@ export async function uploadBlossom(options: BlossomOptions) {
     method: "PUT",
     body: options.file,
     headers: {
-      authorization,
-    },
+      authorization
+    }
   })
   const json = await res.json()
   if (res.status === 200) {

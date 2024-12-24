@@ -25,7 +25,7 @@
     // Load at least one note, regardless of time frame
     load({
       filters: [{authors: [pubkey], limit: 1}],
-      relays: ctx.app.router.FromPubkeys([pubkey]).getUrls(),
+      relays: ctx.app.router.FromPubkeys([pubkey]).getUrls()
     })
   })
 </script>

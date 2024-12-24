@@ -28,7 +28,7 @@ export const LinkExtension = Node.create({
   priority: 1000,
   addAttributes() {
     return {
-      url: {default: null},
+      url: {default: null}
     }
   },
   renderHTML(props) {
@@ -43,8 +43,8 @@ export const LinkExtension = Node.create({
         serialize(state: MarkdownSerializerState, node: ProsemirrorNode) {
           state.write(node.attrs.url)
         },
-        parse: {},
-      },
+        parse: {}
+      }
     }
   },
   addCommands() {
@@ -55,10 +55,10 @@ export const LinkExtension = Node.create({
           return commands.insertContent(
             {type: this.name, attrs: {url}},
             {
-              updateSelection: false,
-            },
+              updateSelection: false
+            }
           )
-        },
+        }
     }
   },
   addInputRules() {
@@ -72,8 +72,8 @@ export const LinkExtension = Node.create({
               index: match.index!,
               text: match[0],
               data: {
-                url: match[0],
-              },
+                url: match[0]
+              }
             }
           }
 
@@ -86,18 +86,15 @@ export const LinkExtension = Node.create({
             try {
               tr.insert(range.from - 1, this.type.create(match.data))
                 .delete(tr.mapping.map(range.from - 1), tr.mapping.map(range.to))
-                .insert(
-                  tr.mapping.map(range.to),
-                  this.editor.schema.text(last(Array.from(match.input!))),
-                )
+                .insert(tr.mapping.map(range.to), this.editor.schema.text(last(Array.from(match.input!))))
             } catch (e) {
               // If the node was already linkified, the above code breaks for whatever reason
             }
           }
 
           tr.scrollIntoView()
-        },
-      }),
+        }
+      })
     ]
   },
   addPasteRules() {
@@ -117,8 +114,8 @@ export const LinkExtension = Node.create({
           }
 
           return matches
-        },
-      }),
+        }
+      })
     ]
-  },
+  }
 })

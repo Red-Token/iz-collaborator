@@ -7,6 +7,7 @@ export type ModalOptions = {
   drawer?: boolean
   fullscreen?: boolean
   replaceState?: boolean
+  path?: string
 }
 
 export type Modal = {
@@ -20,25 +21,19 @@ export const emitter = new Emitter()
 
 export const modals = writable<Record<string, Modal>>({})
 
-export const pushModal = (
-  component: ComponentType,
-  props: Record<string, any> = {},
-  options: ModalOptions = {},
-) => {
+export const pushModal = (component: ComponentType, props: Record<string, any> = {}, options: ModalOptions = {}) => {
   const id = randomId()
+  const path = options.path || ""
 
   modals.update(assoc(id, {id, component, props, options}))
 
-  goto("#" + id, {replaceState: options.replaceState})
+  goto(path + "#" + id, {replaceState: options.replaceState})
 
   return id
 }
 
-export const pushDrawer = (
-  component: ComponentType,
-  props: Record<string, any> = {},
-  options: ModalOptions = {},
-) => pushModal(component, props, {...options, drawer: true})
+export const pushDrawer = (component: ComponentType, props: Record<string, any> = {}, options: ModalOptions = {}) =>
+  pushModal(component, props, {...options, drawer: true})
 
 export const clearModals = () => {
   modals.update(always({}))

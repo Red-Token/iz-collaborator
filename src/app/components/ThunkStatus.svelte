@@ -30,9 +30,11 @@
   $: isFailure = !canCancel && ps.every(s => [Failure, Timeout].includes(s.status))
   $: failure = Object.entries($status).find(([url, s]) => [Failure, Timeout].includes(s.status))
 
+  // Delay updating isPending so users can see that the message is sent
   $: {
-    // Delay updating isPending so users can see that the message is sent
-    if (!ps.some(s => s.status == Pending)) {
+    isPending = isPending || ps.some(s => s.status === Pending)
+
+    if (!ps.some(s => s.status === Pending)) {
       setTimeout(() => {
         isPending = false
       }, 2000)
@@ -44,13 +46,14 @@
   {#if isFailure && failure}
     {@const [url, {message, status}] = failure}
     <Tippy
-      class={$$props.class}
+      class="flex items-center {$$props.class}"
       component={ThunkStatusDetail}
       props={{url, message, status, retry}}
-      params={{interactive: true}}>
-      <span class="tooltip flex cursor-pointer items-center gap-1">
+      params={{interactive: true}}
+    >
+      <span class="flex cursor-pointer items-center gap-1 text-error">
         <Icon icon="danger" size={3} />
-        <span class="opacity-50">Failed to send!</span>
+        <span>Failed to send!</span>
       </span>
     </Tippy>
   {:else if canCancel || isPending}
