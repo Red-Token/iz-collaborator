@@ -48,7 +48,7 @@
         </div>
         <div class="flex justify-center gap-4">
           <div class="tooltip" data-tip="Source Code">
-            <Link external href="https://github.com/coracle-social/flotilla">
+            <Link external href="https://github.com/Red-Token/iz-collaborator">
               <Icon icon="code-2" />
             </Link>
           </div>
