@@ -1,14 +1,14 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type {CapacitorConfig} from "@capacitor/cli"
 
 const config: CapacitorConfig = {
-  appId: 'social.flotilla',
-  appName: 'Iz-Collaborator',
-  webDir: 'build',
+  appId: "com.iz-collaborator",
+  appName: "iz-collaborator",
+  webDir: "build",
   plugins: {
     SplashScreen: {
       androidSplashResourceName: "splash"
     }
   }
-};
+}
 
-export default config;
+export default config

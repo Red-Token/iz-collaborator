@@ -1,4 +1,4 @@
-package social.flotilla;
+package social.izcollaborator;
 
 import com.getcapacitor.BridgeActivity;
 
