@@ -1,25 +1,19 @@
-import { app, BrowserWindow, Tray, Menu, shell } from "electron"
-//import nodePath from "node:path"
-import path from "path"
-import { fork } from "child_process"
-import { fileURLToPath } from "url"
-import http from "http"
+import { app, BrowserWindow, Tray, Menu, shell } from "electron";
+import path from "path";
+import { fileURLToPath } from "url";
+import http from "http";
 //import Logger from "electron-log"
-
-
 //path
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // Variables
-const isDev = !app.isPackaged
-const isMac = process.platform === "darwin" ? true : false
-const serverPath = isDev ? path.join(__dirname, "./build/index.js") : path.join(__dirname, "build", "index.js")
+const isDev = !app.isPackaged;
+const isMac = process.platform === "darwin";
 const gotTheLock = app.requestSingleInstanceLock()
 
 let tray
-let mainWindow
-let serverProcess
+let mainWindow;
+let server
 
 console.log("App is packaged:", !isDev)
 
@@ -34,13 +28,18 @@ if (!gotTheLock) {
 		}
 	})
 
-	app.on("ready", async () => {
-		
-      startServer() 
-		await waitForServer("http://localhost:3000", 15000) 
-		createWindow()
-		setupTray()
-
+	app.whenReady().then(async () => {
+		try {
+		  server = await startServer();
+		  createWindow();
+		  setupTray();
+		  
+		  // Остальной код меню...
+		} catch (error) {
+		  console.error('Server start failed:', error);
+		  app.quit();
+		}
+	  
 		/// Remove app Menu
 		if (isMac) {
 			Menu.setApplicationMenu(
@@ -52,7 +51,12 @@ if (!gotTheLock) {
 		}
 	})
 
-	app.on("window-all-closed", () => { if (!isMac) app.quit() })
+	app.on('window-all-closed', () => {
+		if (server && server.close) {
+		  server.close(); 
+		}
+		if (!isMac) app.quit();
+	  });
 
 	app.on("activate", () => {
 		if (BrowserWindow.getAllWindows().length === 0) {
@@ -94,10 +98,9 @@ async function createWindow() {
 }
 
 async function startServer() {
-	console.log(`Starting server from: ${serverPath}`)
-	serverProcess = fork(serverPath)
-	serverProcess.on("error", err => console.log("Server process error:", err))
-	serverProcess.on("exit", code => console.log(`Server process exited with code ${code}`))
+	//console.log(`Starting server from: ${serverPath}`)
+	const { startServer } = await import('./server.js');
+	return startServer();
 }
 
 /// Add Contect Menu
