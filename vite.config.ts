@@ -1,12 +1,11 @@
 import {config} from "dotenv"
-import { defineConfig } from "vite"
-import { SvelteKitPWA } from "@vite-pwa/sveltekit"
-import { sveltekit } from "@sveltejs/kit/vite"
+import {defineConfig} from "vite"
+import {SvelteKitPWA} from "@vite-pwa/sveltekit"
+import {sveltekit} from "@sveltejs/kit/vite"
 import svg from "@poppanator/sveltekit-svg"
 
-
-config({ path: ".env.local" })
-config({ path: ".env" })
+config({path: ".env.local"})
+config({path: ".env"})
 
 export default defineConfig({
 

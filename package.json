@@ -89,8 +89,6 @@
     "nostr-signer-capacitor-plugin": "coracle-social/nostr-signer-capacitor-plugin#9fbe4f8",
     "nostr-tools": "^2.7.2",
     "prettier-plugin-tailwindcss": "^0.6.5",
-    "qrcode": "^1.5.4",
-    "svelte-tree-view": "^1.4.2",
-    "throttle-debounce": "^5.0.2"
+    "qrcode": "^1.5.4"
   }
 }

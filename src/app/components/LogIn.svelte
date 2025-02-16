@@ -73,8 +73,6 @@
 
   const loginWithPassword = () => pushModal(LogInPassword)
 
-  const loginWithPassword = () => pushModal(LogInPassword)
-
   const loginWithBunker = () => pushModal(LogInBunker)
 
   const hasSigner = $derived(getNip07() || signers.length > 0)

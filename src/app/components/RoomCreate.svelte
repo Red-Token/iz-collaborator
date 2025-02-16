@@ -20,9 +20,6 @@
   const room = randomId()
   const relay = deriveRelay(url)
 
-  const room = randomId()
-  const relay = deriveRelay(url)
-
   const back = () => history.back()
 
   const tryCreate = async () => {

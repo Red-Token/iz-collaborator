@@ -17,8 +17,6 @@
 
   const uploading = writable(false)
 
-  const uploading = writable(false)
-
   const back = () => history.back()
 
   const submit = () => {

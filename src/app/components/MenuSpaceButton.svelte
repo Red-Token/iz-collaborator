@@ -10,8 +10,6 @@
 
   const path = makeSpacePath(url)
 
-  const path = makeSpacePath(url)
-
   const openMenu = () => pushDrawer(MenuSpace, {url})
 </script>
 
