@@ -6,15 +6,20 @@
   import {deriveChannel, channelIsLocked} from "@app/state"
   import {notifications} from "@app/notifications"
 
-  export let url
-  export let room
-  export let notify = false
+  interface Props {
+    url: any
+    room: any
+    notify?: boolean
+    replaceState?: boolean
+  }
+
+  const {url, room, notify = false, replaceState = false}: Props = $props()
 
   const path = makeRoomPath(url, room)
   const channel = deriveChannel(url, room)
 </script>
 
-<SecondaryNavItem href={path} notification={notify ? $notifications.has(path) : false}>
+<SecondaryNavItem href={path} {replaceState} notification={notify ? $notifications.has(path) : false}>
   {#if channelIsLocked($channel)}
     <Icon icon="lock" size={4} />
   {:else}

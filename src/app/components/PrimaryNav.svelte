@@ -14,6 +14,11 @@
   import {pushModal} from "@app/modal"
   import {makeSpacePath} from "@app/routes"
   import {notifications} from "@app/notifications"
+  interface Props {
+    children?: import("svelte").Snippet
+  }
+
+  const {children}: Props = $props()
 
   const addSpace = () => pushModal(SpaceAdd)
 
@@ -21,16 +26,16 @@
 
   const showSettingsMenu = () => pushModal(MenuSettings)
 
-  const openNotes = () => ($canDecrypt ? goto("/notes") : pushModal(ChatEnable, {next: "/notes"}))
-
   const openChat = () => ($canDecrypt ? goto("/chat") : pushModal(ChatEnable, {next: "/chat"}))
 
-  $: spaceUrls = Array.from($userRoomsByUrl.keys())
-  $: spacePaths = spaceUrls.map(url => makeSpacePath(url))
-  $: anySpaceNotifications = spacePaths.some(path => !$page.url.pathname.startsWith(path) && $notifications.has(path))
+  const spaceUrls = $derived(Array.from($userRoomsByUrl.keys()))
+  const spacePaths = $derived(spaceUrls.map(url => makeSpacePath(url)))
+  const anySpaceNotifications = $derived(
+    spacePaths.some(path => !$page.url.pathname.startsWith(path) && $notifications.has(path))
+  )
 </script>
 
-<div class="relative z-nav hidden w-14 flex-shrink-0 bg-base-200 pt-4 md:block">
+<div class="sail sait saib relative z-nav hidden w-14 flex-shrink-0 bg-base-200 pt-4 md:block">
   <div class="flex h-full flex-col justify-between">
     <div>
       {#if PLATFORM_RELAY}
@@ -43,7 +48,7 @@
         {#each spaceUrls as url (url)}
           <PrimaryNavItemSpace {url} />
         {/each}
-        <PrimaryNavItem title="Add Space" on:click={addSpace} class="tooltip-right">
+        <PrimaryNavItem title="Add Space" onclick={addSpace} class="tooltip-right">
           <Avatar icon="settings-minimalistic" class="!h-10 !w-10" />
         </PrimaryNavItem>
       {/if}
@@ -52,12 +57,9 @@
       <PrimaryNavItem title="Settings" href="/settings/profile" prefix="/settings" class="tooltip-right">
         <Avatar src={$userProfile?.picture} class="!h-10 !w-10" />
       </PrimaryNavItem>
-      <PrimaryNavItem title="Notes" on:click={openNotes} class="tooltip-right">
-        <Avatar icon="notes-minimalistic" class="!h-10 !w-10" />
-      </PrimaryNavItem>
       <PrimaryNavItem
         title="Messages"
-        on:click={openChat}
+        onclick={openChat}
         class="tooltip-right"
         notification={$notifications.has("/chat")}
       >
@@ -70,26 +72,25 @@
   </div>
 </div>
 
-<slot />
+{@render children?.()}
 
-<div class="border-top fixed bottom-0 left-0 right-0 z-nav h-14 border border-base-200 bg-base-100 md:hidden">
+<!-- a little extra something for ios -->
+<div class="fixed bottom-0 left-0 right-0 z-nav h-14 bg-base-100 md:hidden"></div>
+<div class="border-top bottom-sai fixed left-0 right-0 z-nav h-14 border border-base-200 bg-base-100 md:hidden">
   <div class="content-padding-x content-sizing flex justify-between px-2">
     <div class="flex gap-2 sm:gap-8">
-      <PrimaryNavItem title="Search" href="/people">
-        <Avatar icon="magnifer" class="!h-10 !w-10" />
+      <PrimaryNavItem title="Home" href="/home">
+        <Avatar icon="home-smile" class="!h-10 !w-10" />
       </PrimaryNavItem>
-      <PrimaryNavItem title="Notes" on:click={openNotes}>
-        <Avatar icon="notes-minimalistic" class="!h-10 !w-10" />
-      </PrimaryNavItem>
-      <PrimaryNavItem title="Messages" on:click={openChat} notification={$notifications.has("/chat")}>
+      <PrimaryNavItem title="Messages" onclick={openChat} notification={$notifications.has("/chat")}>
         <Avatar icon="letter" class="!h-10 !w-10" />
       </PrimaryNavItem>
-      <PrimaryNavItem title="Spaces" on:click={showSpacesMenu} notification={anySpaceNotifications}>
+      <PrimaryNavItem title="Spaces" onclick={showSpacesMenu} notification={anySpaceNotifications}>
         <Avatar icon="settings-minimalistic" class="!h-10 !w-10" />
       </PrimaryNavItem>
     </div>
-    <PrimaryNavItem title="Settings" on:click={showSettingsMenu}>
-      <Avatar src={$userProfile?.picture} class="!h-10 !w-10" />
+    <PrimaryNavItem title="Settings" onclick={showSettingsMenu}>
+      <Avatar icon="settings" src={$userProfile?.picture} class="!h-10 !w-10" />
     </PrimaryNavItem>
   </div>
 </div>

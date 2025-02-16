@@ -40,7 +40,7 @@ import {
   asDecryptedEvent,
   normalizeRelayUrl
 } from "@welshman/util"
-import type {TrustedEvent, Repository, SignedEvent, PublishedList, List, Filter} from "@welshman/util"
+import type {TrustedEvent, SignedEvent, PublishedList, List, Filter} from "@welshman/util"
 import {Nip59} from "@welshman/signer"
 import {
   pubkey,
@@ -73,15 +73,15 @@ export const GENERAL = "_"
 
 export const PROTECTED = ["-"]
 
-export const LEGACY_MESSAGE = 209
-
-export const LEGACY_THREAD = 309
-
 export const INDEXER_RELAYS = ["wss://purplepag.es/", "wss://relay.damus.io/", "wss://relay.nostr.band/"]
 
 export const SIGNER_RELAYS = ["wss://relay.nsec.app/", "wss://bucket.coracle.social/"]
 
 export const PLATFORM_URL = window.location.origin
+
+export const PLATFORM_TERMS = import.meta.env.VITE_PLATFORM_TERMS
+
+export const PLATFORM_PRIVACY = import.meta.env.VITE_PLATFORM_PRIVACY
 
 export const PLATFORM_LOGO = PLATFORM_URL + "/pwa-192x192.png"
 
@@ -102,13 +102,6 @@ export const DUFFLEPUD_URL = "https://dufflepud.onrender.com"
 export const IMGPROXY_URL = "https://imgproxy.coracle.social"
 
 export const REACTION_KINDS = [REACTION, ZAP_RESPONSE]
-
-export const THREAD_FILTER: Filter = {kinds: [THREAD, LEGACY_THREAD]}
-
-export const COMMENT_FILTER: Filter = {
-  kinds: [COMMENT],
-  "#K": [String(THREAD), String(LEGACY_THREAD)]
-}
 
 export const NIP46_PERMS =
   "nip04_encrypt,nip04_decrypt,nip44_encrypt,nip44_decrypt," +
@@ -250,7 +243,7 @@ export const getUrlsForEvent = derived([trackerStore, thunks], ([$tracker, $thun
   }
 })
 
-export const getEventsForUrl = (repository: Repository, url: string, filters: Filter[]) => {
+export const getEventsForUrl = (url: string, filters: Filter[]) => {
   const $getUrlsForEvent = get(getUrlsForEvent)
   const $events = repository.query(filters)
 
@@ -341,7 +334,7 @@ export const hasMembershipUrl = (list: List | undefined, url: string) =>
 export const getMembershipUrls = (list?: List) => {
   const tags = getListTags(list)
 
-  return sort(uniq([...getRelayTagValues(tags), ...getGroupTags(tags).map(nth(2))]))
+  return sort(uniq([...getRelayTagValues(tags), ...getGroupTags(tags).map(nth(2))]).map(url => normalizeRelayUrl(url)))
 }
 
 export const getMembershipRooms = (list?: List) =>
@@ -397,19 +390,20 @@ export const chats = derived([pubkey, chatMessages, profilesByPubkey], ([$pubkey
     pushToMapKey(messagesByChatId, chatId, message)
   }
 
+  const displayPubkey = (pubkey: string) => {
+    const profile = $profilesByPubkey.get(pubkey)
+
+    return profile ? displayProfile(profile) : ""
+  }
+
   return sortBy(
     c => -c.last_activity,
     Array.from(messagesByChatId.entries()).map(([id, events]): Chat => {
-      const pubkeys = splitChatId(id)
+      const pubkeys = remove($pubkey!, splitChatId(id))
       const messages = sortBy(e => -e.created_at, events)
       const last_activity = messages[0].created_at
-      const search_text = remove($pubkey as string, pubkeys)
-        .map(pubkey => {
-          const profile = $profilesByPubkey.get(pubkey)
-
-          return profile ? displayProfile(profile) : ""
-        })
-        .join(" ")
+      const search_text =
+        pubkeys.length === 0 ? displayPubkey($pubkey!) + " note to self" : pubkeys.map(displayPubkey).join(" ")
 
       return {id, pubkeys, messages, last_activity, search_text}
     })
@@ -435,24 +429,7 @@ export const chatSearch = derived(chats, $chats =>
 
 // Messages
 
-// TODO: remove support for legacy messages
-export const adaptLegacyMessage = (event: TrustedEvent) => {
-  if (event.kind === LEGACY_MESSAGE) {
-    let room = event.tags.find(nthEq(0, "~"))?.[1] || GENERAL
-
-    if (room === "general") {
-      room = GENERAL
-    }
-
-    return {...event, kind: MESSAGE, tags: [...event.tags, tagRoom(room, "")]}
-  }
-
-  return event
-}
-
-export const messages = derived(deriveEvents(repository, {filters: [{kinds: [MESSAGE, LEGACY_MESSAGE]}]}), $events =>
-  $events.map(adaptLegacyMessage)
-)
+export const messages = derived(deriveEvents(repository, {filters: [{kinds: [MESSAGE]}]}), $events => $events)
 
 // Nip29
 

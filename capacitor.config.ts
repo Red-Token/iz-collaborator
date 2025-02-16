@@ -4,6 +4,9 @@ const config: CapacitorConfig = {
   appId: "com.iz-collaborator",
   appName: "iz-collaborator",
   webDir: "build",
+  server: {
+    androidScheme: "https"
+  },
   plugins: {
     SplashScreen: {
       androidSplashResourceName: "splash"

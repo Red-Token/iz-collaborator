@@ -1,6 +1,5 @@
 <script lang="ts">
-  export let value
-  export let isBlock
+  const {value, isBlock} = $props()
 </script>
 
 <code class="w-full overflow-auto whitespace-pre rounded bg-neutral px-1 text-neutral-content" class:block={isBlock}>

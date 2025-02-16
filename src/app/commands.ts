@@ -1,7 +1,9 @@
+import * as nip19 from "nostr-tools/nip19"
 import {get} from "svelte/store"
-import {ctx, sample, uniq, sleep, chunk, equals} from "@welshman/lib"
+import {ctx, uniq, equals} from "@welshman/lib"
 import {
   DELETE,
+  REPORT,
   PROFILE,
   INBOX_RELAYS,
   RELAYS,
@@ -24,11 +26,10 @@ import {
   getTag,
   getListTags,
   getRelayTags,
-  isShareableRelayUrl,
-  getRelayTagValues
+  getRelayTagValues,
+  toNostrURI
 } from "@welshman/util"
-import type {TrustedEvent, EventTemplate, List} from "@welshman/util"
-import type {SubscribeRequestWithHandlers} from "@welshman/net"
+import type {TrustedEvent, EventContent, EventTemplate} from "@welshman/util"
 import {PublishStatus, AuthStatus, SocketStatus} from "@welshman/net"
 import {Nip59, makeSecret, stamp, Nip46Broker} from "@welshman/signer"
 import {
@@ -37,15 +38,11 @@ import {
   repository,
   publishThunk,
   publishThunks,
-  loadProfile,
-  loadInboxRelaySelections,
   profilesByPubkey,
   relaySelectionsByPubkey,
   getWriteRelayUrls,
-  loadFollows,
-  loadMutes,
   tagEvent,
-  tagReactionTo,
+  tagEventForReaction,
   getRelayUrls,
   userRelaySelections,
   userInboxRelaySelections,
@@ -53,20 +50,13 @@ import {
   loadRelay,
   addSession,
   clearStorage,
-  dropSession
+  dropSession,
+  tagEventForComment,
+  tagEventForQuote
 } from "@welshman/app"
 import type {Thunk} from "@welshman/app"
-import {
-  tagRoom,
-  PROTECTED,
-  userMembership,
-  INDEXER_RELAYS,
-  NIP46_PERMS,
-  loadMembership,
-  loadSettings,
-  getDefaultPubkeys,
-  userRoomsByUrl
-} from "@app/state"
+import {tagRoom, PROTECTED, userMembership, INDEXER_RELAYS, NIP46_PERMS, userRoomsByUrl} from "@app/state"
+import {loadUserData} from "@app/requests"
 
 // Utils
 
@@ -92,6 +82,22 @@ export const getThunkError = async (thunk: Thunk) => {
   if (status !== PublishStatus.Success) {
     return message
   }
+}
+
+export const prependParent = (parent: TrustedEvent | undefined, {content, tags}: EventContent) => {
+  if (parent) {
+    const nevent = nip19.neventEncode({
+      id: parent.id,
+      kind: parent.kind,
+      author: parent.pubkey,
+      relays: ctx.app.router.Event(parent).limit(3).getUrls()
+    })
+
+    tags = [...tags, tagEventForQuote(parent)]
+    content = toNostrURI(nevent) + "\n\n" + content
+  }
+
+  return {content, tags}
 }
 
 // Log in
@@ -139,44 +145,6 @@ export const logout = async () => {
 
   localStorage.clear()
 }
-
-// Loaders
-
-export const loadUserData = (pubkey: string, request: Partial<SubscribeRequestWithHandlers> = {}) => {
-  const promise = Promise.race([
-    sleep(3000),
-    Promise.all([
-      loadInboxRelaySelections(pubkey, request),
-      loadMembership(pubkey, request),
-      loadSettings(pubkey, request),
-      loadProfile(pubkey, request),
-      loadFollows(pubkey, request),
-      loadMutes(pubkey, request)
-    ])
-  ])
-
-  // Load followed profiles slowly in the background without clogging other stuff up. Only use a single
-  // indexer relay to avoid too many redundant validations, which slow things down and eat bandwidth
-  promise.then(async () => {
-    for (const pubkeys of chunk(50, getDefaultPubkeys())) {
-      const relays = sample(1, INDEXER_RELAYS)
-
-      await sleep(1000)
-
-      for (const pubkey of pubkeys) {
-        loadMembership(pubkey, {relays})
-        loadProfile(pubkey, {relays})
-        loadFollows(pubkey, {relays})
-        loadMutes(pubkey, {relays})
-      }
-    }
-  })
-
-  return promise
-}
-
-export const discoverRelays = (lists: List[]) =>
-  Promise.all(uniq(lists.flatMap(getRelayUrls)).filter(isShareableRelayUrl).map(loadRelay))
 
 // Synchronization
 
@@ -355,12 +323,7 @@ export const checkRelayAuth = async (url: string, timeout = 3000) => {
 }
 
 export const attemptRelayAccess = async (url: string, claim = "") => {
-  const checks = [
-    () => checkRelayProfile(url),
-    () => checkRelayConnection(url),
-    () => checkRelayAccess(url, claim),
-    () => checkRelayAuth(url)
-  ]
+  const checks = [() => checkRelayConnection(url), () => checkRelayAccess(url, claim), () => checkRelayAuth(url)]
 
   for (const check of checks) {
     const error = await check()
@@ -410,13 +373,31 @@ export const makeDelete = ({event}: {event: TrustedEvent}) => {
 export const publishDelete = ({relays, event}: {relays: string[]; event: TrustedEvent}) =>
   publishThunk({event: makeDelete({event}), relays})
 
+export type ReportParams = {
+  event: TrustedEvent
+  content: string
+  reason: string
+}
+
+export const makeReport = ({event, reason, content}: ReportParams) => {
+  const tags = [
+    ["p", event.pubkey],
+    ["e", event.id, reason]
+  ]
+
+  return createEvent(REPORT, {content, tags})
+}
+
+export const publishReport = ({relays, event, reason, content}: ReportParams & {relays: string[]}) =>
+  publishThunk({event: makeReport({event, reason, content}), relays})
+
 export type ReactionParams = {
   event: TrustedEvent
   content: string
 }
 
 export const makeReaction = ({event, content}: ReactionParams) => {
-  const tags = [["k", String(event.kind)], ...tagReactionTo(event)]
+  const tags = tagEventForReaction(event)
   const groupTag = getTag("h", event.tags)
 
   if (groupTag) {
@@ -430,37 +411,14 @@ export const makeReaction = ({event, content}: ReactionParams) => {
 export const publishReaction = ({relays, ...params}: ReactionParams & {relays: string[]}) =>
   publishThunk({event: makeReaction(params), relays})
 
-export type ReplyParams = {
+export type CommentParams = {
   event: TrustedEvent
   content: string
   tags?: string[][]
 }
 
-export const makeComment = ({event, content, tags = []}: ReplyParams) => {
-  const seenRoots = new Set<string>()
+export const makeComment = ({event, content, tags = []}: CommentParams) =>
+  createEvent(COMMENT, {content, tags: [...tags, ...tagEventForComment(event)]})
 
-  for (const [raw, ...tag] of event.tags.filter(t => t[0].match(/^(k|e|a|i)$/i))) {
-    const T = raw.toUpperCase()
-    const t = raw.toLowerCase()
-
-    if (seenRoots.has(T)) {
-      tags.push([t, ...tag])
-    } else {
-      tags.push([T, ...tag])
-      seenRoots.add(T)
-    }
-  }
-
-  if (seenRoots.size === 0) {
-    tags.push(["K", String(event.kind)])
-    tags.push(["E", event.id])
-  }
-
-  tags.push(["k", String(event.kind)])
-  tags.push(["e", event.id])
-
-  return createEvent(COMMENT, {content, tags})
-}
-
-export const publishComment = ({relays, ...params}: ReplyParams & {relays: string[]}) =>
+export const publishComment = ({relays, ...params}: CommentParams & {relays: string[]}) =>
   publishThunk({event: makeComment(params), relays})

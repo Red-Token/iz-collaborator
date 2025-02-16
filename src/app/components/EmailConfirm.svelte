@@ -7,15 +7,14 @@
   import {pushModal} from "@app/modal"
   import {BURROW_URL} from "@app/state"
 
-  export let email
-  export let confirm_token
+  const {email, confirm_token} = $props()
 
   const login = () => {
     pushModal(LogInPassword, {email}, {path: "/"})
   }
 
-  let error: string
-  let loading = true
+  let error = $state("")
+  let loading = $state(true)
 
   onMount(async () => {
     const [res] = await Promise.all([postJson(BURROW_URL + "/user/confirm-email", {email, confirm_token}), sleep(2000)])
@@ -46,5 +45,5 @@
       {/if}
     </Spinner>
   </p>
-  <Button class="btn btn-primary" on:click={login} disabled={loading}>Continue to Login</Button>
+  <Button class="btn btn-primary" onclick={login} disabled={loading}>Continue to Login</Button>
 </div>

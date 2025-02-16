@@ -17,6 +17,7 @@
     isAddress,
     isNewline
   } from "@welshman/content"
+  import {preventDefault, stopPropagation} from "@lib/html"
   import Link from "@lib/components/Link.svelte"
   import Icon from "@lib/components/Icon.svelte"
   import Button from "@lib/components/Button.svelte"
@@ -30,14 +31,27 @@
   import ContentMention from "@app/components/ContentMention.svelte"
   import {entityLink, userSettingValues} from "@app/state"
 
-  export let event
-  export let minLength = 500
-  export let maxLength = 700
-  export let showEntire = false
-  export let hideMedia = false
-  export let expandMode = "block"
-  export let quoteProps: Record<string, any> = {}
-  export let depth = 0
+  interface Props {
+    event: any
+    minLength?: number
+    maxLength?: number
+    showEntire?: boolean
+    hideMediaAtDepth?: number
+    expandMode?: string
+    relays?: string[]
+    depth?: number
+  }
+
+  let {
+    event,
+    minLength = 500,
+    maxLength = 700,
+    showEntire = $bindable(false),
+    hideMediaAtDepth = 1,
+    expandMode = "block",
+    relays = [],
+    depth = 0
+  }: Props = $props()
 
   const fullContent = parse(event)
 
@@ -48,13 +62,13 @@
   const isBlock = (i: number) => {
     const parsed = fullContent[i]
 
-    if (!parsed || hideMedia) return false
+    if (!parsed || hideMediaAtDepth <= depth) return false
 
     if (isLink(parsed) && $userSettingValues.show_media && isStartOrEnd(i)) {
       return true
     }
 
-    if ((isEvent(parsed) || isAddress(parsed)) && isStartOrEnd(i) && depth < 1) {
+    if ((isEvent(parsed) || isAddress(parsed)) && isStartOrEnd(i)) {
       return true
     }
 
@@ -82,19 +96,21 @@
     warning = null
   }
 
-  let warning = $userSettingValues.hide_sensitive && event.tags.find(nthEq(0, "content-warning"))?.[1]
+  let warning = $state($userSettingValues.hide_sensitive && event.tags.find(nthEq(0, "content-warning"))?.[1])
 
-  $: shortContent = showEntire
-    ? fullContent
-    : truncate(fullContent, {
-        minLength,
-        maxLength,
-        mediaLength: hideMedia ? 20 : 200
-      })
+  const shortContent = $derived(
+    showEntire
+      ? fullContent
+      : truncate(fullContent, {
+          minLength,
+          maxLength,
+          mediaLength: hideMediaAtDepth <= depth ? 20 : 200
+        })
+  )
 
-  $: hasEllipsis = shortContent.find(isEllipsis)
-  $: expandInline = hasEllipsis && expandMode === "inline"
-  $: expandBlock = hasEllipsis && expandMode === "block"
+  const hasEllipsis = $derived(shortContent.some(isEllipsis))
+  const expandInline = $derived(hasEllipsis && expandMode === "inline")
+  const expandBlock = $derived(hasEllipsis && expandMode === "block")
 </script>
 
 <div class="relative">
@@ -103,7 +119,7 @@
       <Icon icon="danger" />
       <p>
         This note has been flagged by the author as "{warning}".<br />
-        <Button class="link" on:click={ignoreWarning}>Show anyway</Button>
+        <Button class="link" onclick={ignoreWarning}>Show anyway</Button>
       </p>
     </div>
   {:else}
@@ -112,8 +128,8 @@
       style={expandBlock ? "mask-image: linear-gradient(0deg, transparent 0px, black 100px)" : ""}
     >
       {#each shortContent as parsed, i}
-        {#if isNewline(parsed)}
-          <ContentNewline value={parsed.value.slice(isBlock(i - 1) ? 1 : 0)} />
+        {#if isNewline(parsed) && !isBlock(i - 1)}
+          <ContentNewline value={parsed.value} />
         {:else if isTopic(parsed)}
           <ContentTopic value={parsed.value} />
         {:else if isCode(parsed)}
@@ -130,11 +146,7 @@
           <ContentMention value={parsed.value} />
         {:else if isEvent(parsed) || isAddress(parsed)}
           {#if isBlock(i)}
-            <ContentQuote {...quoteProps} value={parsed.value} {depth} {event}>
-              <div slot="note-content" let:event>
-                <svelte:self {quoteProps} {hideMedia} {event} depth={depth + 1} />
-              </div>
-            </ContentQuote>
+            <ContentQuote {depth} {relays} {hideMediaAtDepth} value={parsed.value} {event} />
           {:else}
             <Link
               external
@@ -154,7 +166,7 @@
     </div>
     {#if expandBlock}
       <div class="relative z-feature -mt-6 flex justify-center py-2">
-        <button type="button" class="btn btn-neutral" on:click|stopPropagation|preventDefault={expand}>
+        <button type="button" class="btn btn-neutral" onclick={stopPropagation(preventDefault(expand))}>
           See more
         </button>
       </div>

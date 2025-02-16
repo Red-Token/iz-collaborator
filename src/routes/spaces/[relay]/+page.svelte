@@ -1,6 +1,7 @@
 <script lang="ts">
   import {page} from "$app/stores"
   import type {TrustedEvent} from "@welshman/util"
+  import {displayRelayUrl} from "@welshman/util"
   import {deriveRelay} from "@welshman/app"
   import {fade} from "@lib/transition"
   import Icon from "@lib/components/Icon.svelte"
@@ -24,7 +25,7 @@
     deriveOtherRooms,
     userRoomsByUrl
   } from "@app/state"
-  import {makeChatPath, makeRoomPath, makeSpacePath} from "@app/routes"
+  import {makeChatPath, makeThreadPath, makeCalendarPath, makeRoomPath} from "@app/routes"
   import {notifications} from "@app/notifications"
   import {pushModal} from "@app/modal"
 
@@ -32,37 +33,44 @@
   const relay = deriveRelay(url)
   const userRooms = deriveUserRooms(url)
   const otherRooms = deriveOtherRooms(url)
-  const threadsPath = makeSpacePath(url, "threads")
+  const threadsPath = makeThreadPath(url)
+  const calendarPath = makeCalendarPath(url)
 
   const joinSpace = () => pushModal(SpaceJoin, {url})
 
   const addRoom = () => pushModal(RoomCreate, {url})
 
-  let relayAdminEvents: TrustedEvent[] = []
+  let relayAdminEvents: TrustedEvent[] = $state([])
 
-  $: pubkey = $relay?.profile?.pubkey
+  const pubkey = $derived($relay?.profile?.pubkey)
 </script>
 
 <div class="relative flex flex-col">
   <PageBar>
-    <div slot="icon" class="center">
-      <Icon icon="home-smile" />
-    </div>
-    <strong slot="title">Home</strong>
-    <div slot="action" class="row-2">
-      {#if !$userRoomsByUrl.has(url)}
-        <Button class="btn btn-primary btn-sm" on:click={joinSpace}>
-          <Icon icon="login-2" />
-          Join Space
-        </Button>
-      {:else if pubkey}
-        <Link class="btn btn-primary btn-sm" href={makeChatPath([pubkey])}>
-          <Icon icon="letter" />
-          Contact Owner
-        </Link>
-      {/if}
-      <MenuSpaceButton {url} />
-    </div>
+    {#snippet icon()}
+      <div class="center">
+        <Icon icon="home-smile" />
+      </div>
+    {/snippet}
+    {#snippet title()}
+      <strong>Home</strong>
+    {/snippet}
+    {#snippet action()}
+      <div class="row-2">
+        {#if !$userRoomsByUrl.has(url)}
+          <Button class="btn btn-primary btn-sm" onclick={joinSpace}>
+            <Icon icon="login-2" />
+            Join Space
+          </Button>
+        {:else if pubkey}
+          <Link class="btn btn-primary btn-sm" href={makeChatPath([pubkey])}>
+            <Icon icon="letter" />
+            Contact Owner
+          </Link>
+        {/if}
+        <MenuSpaceButton {url} />
+      </div>
+    {/snippet}
   </PageBar>
   <div class="col-2 p-2">
     <div class="card2 bg-alt col-4 text-left">
@@ -78,11 +86,11 @@
             </div>
           </div>
         </div>
-        <div>
+        <div class="min-w-0">
           <h2 class="ellipsize whitespace-nowrap text-xl">
             <RelayName {url} />
           </h2>
-          <p class="text-sm opacity-75">{url}</p>
+          <p class="ellipsize text-sm opacity-75">{displayRelayUrl(url)}</p>
         </div>
       </div>
       <RelayDescription {url} />
@@ -122,7 +130,16 @@
           <Icon icon="notes-minimalistic" />
           Threads
           {#if $notifications.has(threadsPath)}
-            <div class="absolute -right-3 -top-1 h-2 w-2 rounded-full bg-primary-content" transition:fade />
+            <div class="absolute -right-3 -top-1 h-2 w-2 rounded-full bg-primary-content" transition:fade></div>
+          {/if}
+        </div>
+      </Link>
+      <Link href={calendarPath} class="btn btn-secondary">
+        <div class="relative flex items-center gap-2">
+          <Icon icon="notes-minimalistic" />
+          Calendar
+          {#if $notifications.has(calendarPath)}
+            <div class="absolute -right-3 -top-1 h-2 w-2 rounded-full bg-primary-content" transition:fade></div>
           {/if}
         </div>
       </Link>
@@ -138,7 +155,7 @@
             <ChannelName {url} {room} />
           </div>
           {#if $notifications.has(roomPath)}
-            <div class="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" transition:fade />
+            <div class="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" transition:fade></div>
           {/if}
         </Link>
       {/each}
@@ -154,9 +171,9 @@
           </div>
         </Link>
       {/each}
-      <Button on:click={addRoom} class="btn btn-neutral">
+      <Button onclick={addRoom} class="btn btn-neutral whitespace-nowrap">
         <Icon icon="add-circle" />
-        Create Room
+        Create
       </Button>
     </div>
     {#if pubkey}

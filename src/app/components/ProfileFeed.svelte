@@ -2,7 +2,7 @@
   import {onMount} from "svelte"
   import {sortBy, uniqBy} from "@welshman/lib"
   import {feedFromFilter, makeIntersectionFeed, makeRelayFeed} from "@welshman/feeds"
-  import {NOTE, getAncestorTags} from "@welshman/util"
+  import {NOTE, getReplyTags} from "@welshman/util"
   import type {TrustedEvent} from "@welshman/util"
   import {createFeedController} from "@welshman/app"
   import {createScroller} from "@lib/html"
@@ -10,27 +10,31 @@
   import Spinner from "@lib/components/Spinner.svelte"
   import NoteItem from "@app/components/NoteItem.svelte"
 
-  export let url
-  export let pubkey
-  export let events: TrustedEvent[] = []
-  export let hideLoading = false
+  interface Props {
+    url: any
+    pubkey: any
+    events?: TrustedEvent[]
+    hideLoading?: boolean
+  }
+
+  let {url, pubkey, events = $bindable([]), hideLoading = false}: Props = $props()
 
   const ctrl = createFeedController({
     useWindowing: true,
     feed: makeIntersectionFeed(makeRelayFeed(url), feedFromFilter({kinds: [NOTE], authors: [pubkey]})),
     onEvent: (event: TrustedEvent) => {
-      if (getAncestorTags(event.tags).replies.length === 0) {
+      if (getReplyTags(event.tags).replies.length === 0) {
         buffer.push(event)
       }
     }
   })
 
-  let element: Element
+  let element: Element | undefined = $state()
   let buffer: TrustedEvent[] = []
 
   onMount(() => {
     const scroller = createScroller({
-      element,
+      element: element!,
       delay: 300,
       threshold: 3000,
       onScroll: () => {

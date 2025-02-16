@@ -17,7 +17,7 @@
         class:alert-error={theme === "error"}
       >
         {$toast.message}
-        <Button class="flex items-center opacity-75" on:click={() => popToast($toast.id)}>
+        <Button class="flex items-center opacity-75" onclick={() => popToast($toast.id)}>
           <Icon icon="close-circle" />
         </Button>
       </div>
