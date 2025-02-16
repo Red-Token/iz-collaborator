@@ -5,30 +5,23 @@
   import Icon from "@lib/components/Icon.svelte"
   import EmojiPicker from "@lib/components/EmojiPicker.svelte"
   import EventInfo from "@app/components/EventInfo.svelte"
-  import ChannelConversation from "@app/components/ChannelConversation.svelte"
   import ConfirmDelete from "@app/components/ConfirmDelete.svelte"
   import {publishReaction} from "@app/commands"
-  import {pushModal, pushDrawer} from "@app/modal"
-  import {tagRoom} from "@app/state"
+  import {pushModal} from "@app/modal"
 
-  export let url
-  export let room
-  export let event
+  const {url, event, reply} = $props()
 
   const onEmoji = (emoji: NativeEmoji) => {
     history.back()
-    publishReaction({
-      event,
-      relays: [url],
-      content: emoji.unicode,
-      tags: [tagRoom(room, url)],
-    })
+    publishReaction({event, relays: [url], content: emoji.unicode})
   }
 
   const showEmojiPicker = () => pushModal(EmojiPicker, {onClick: onEmoji}, {replaceState: true})
 
-  const showConversation = () =>
-    pushDrawer(ChannelConversation, {url, room, event}, {replaceState: true})
+  const sendReply = () => {
+    history.back()
+    reply()
+  }
 
   const showInfo = () => pushModal(EventInfo, {event}, {replaceState: true})
 
@@ -36,20 +29,20 @@
 </script>
 
 <div class="col-2">
-  <Button class="btn btn-primary w-full" on:click={showEmojiPicker}>
+  <Button class="btn btn-primary w-full" onclick={showEmojiPicker}>
     <Icon size={4} icon="smile-circle" />
     Send Reaction
   </Button>
-  <Button class="btn btn-neutral w-full" on:click={showConversation}>
+  <Button class="btn btn-neutral w-full" onclick={sendReply}>
     <Icon size={4} icon="reply" />
-    View Conversation
+    Send Reply
   </Button>
-  <Button class="btn btn-neutral" on:click={showInfo}>
+  <Button class="btn btn-neutral" onclick={showInfo}>
     <Icon size={4} icon="code-2" />
     Message Details
   </Button>
   {#if event.pubkey === $pubkey}
-    <Button class="btn btn-neutral text-error" on:click={showDelete}>
+    <Button class="btn btn-neutral text-error" onclick={showDelete}>
       <Icon size={4} icon="trash-bin-2" />
       Delete Message
     </Button>

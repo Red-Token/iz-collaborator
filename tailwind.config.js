@@ -1,4 +1,3 @@
-// import dotenv from "dotenv"
 import daisyui from "daisyui"
 import themes from "daisyui/src/theming/themes"
 import {config} from "dotenv"

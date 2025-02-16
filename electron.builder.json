@@ -1,0 +1,25 @@
+{
+	"appId": "com.electron.iz-collaborator",
+	"productName": "Iz-Collaborator",
+
+	"files": ["build/**/*", "electron/**/*"],
+	"directories": {
+		"buildResources": "assets"
+	},
+	"extraMetadata": {
+		"main": "electron/main.js"
+	},
+	"win": {
+		"target": "nsis",
+		"icon": "assets/icon.ico"
+	},
+	"mac": {
+		"target": "dmg",
+		"icon": "assets/icon.icns"
+	},
+	"linux": {
+		"target": ["deb"],
+		"category": "Internet",
+		"icon": "assets"
+	}
+}

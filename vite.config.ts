@@ -1,18 +1,21 @@
-import dotenv from "dotenv"
+import {config} from "dotenv"
 import {defineConfig} from "vite"
 import {SvelteKitPWA} from "@vite-pwa/sveltekit"
 import {sveltekit} from "@sveltejs/kit/vite"
 import svg from "@poppanator/sveltekit-svg"
 
-dotenv.config({path: ".env.local"})
-dotenv.config({path: ".env"})
+config({path: ".env.local"})
+config({path: ".env"})
 
 export default defineConfig({
+
+  build: {
+    
+    sourcemap: true,
+    
+  },
   server: {
     port: 1847,
-  },
-  build: {
-    sourcemap: true,
   },
   plugins: [
     sveltekit(),
@@ -30,9 +33,10 @@ export default defineConfig({
         // @ts-ignore
         permissions: ["clipboardRead", "clipboardWrite", "unlimitedStorage"],
         icons: [
-          {src: "pwa-64x64.png", sizes: "64x64", type: "image/png"},
-          {src: "pwa-192x192.png", sizes: "192x192", type: "image/png"},
-          {src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any"},
+          { src: "icon_32x32", sizes: "32x32", type: "image/png" },
+          { src: "pwa-64x64.png", sizes: "64x64", type: "image/png" },
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any" },
           {
             src: "maskable-icon-512x512.png",
             sizes: "512x512",

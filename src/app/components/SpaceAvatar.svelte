@@ -3,7 +3,11 @@
   import Avatar from "@lib/components/Avatar.svelte"
   import {deriveRelay} from "@welshman/app"
 
-  export let url = ""
+  interface Props {
+    url?: string
+  }
+
+  const {url = ""}: Props = $props()
 
   const relay = deriveRelay(url)
 </script>
@@ -12,4 +16,5 @@
   icon="remote-controller-minimalistic"
   class="!h-10 !w-10"
   alt={displayRelayUrl(url)}
-  src={$relay?.profile?.icon} />
+  src={$relay?.profile?.icon}
+/>

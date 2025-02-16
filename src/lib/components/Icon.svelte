@@ -6,7 +6,6 @@
 </style>
 
 <script lang="ts">
-  import cx from "classnames"
   import {switcher} from "@welshman/lib"
   import AddSquare from "@assets/icons/Add Square.svg?dataurl"
   import ArrowsALogout2 from "@assets/icons/Arrows ALogout 2.svg?dataurl"
@@ -51,6 +50,7 @@
   import KeyMinimalisticSquare3 from "@assets/icons/Key Minimalistic Square 3.svg?dataurl"
   import Letter from "@assets/icons/Letter.svg?dataurl"
   import LinkRound from "@assets/icons/Link Round.svg?dataurl"
+  import Lock from "@assets/icons/Lock.svg?dataurl"
   import Login from "@assets/icons/Login.svg?dataurl"
   import Login2 from "@assets/icons/Login 2.svg?dataurl"
   import Magnifer from "@assets/icons/Magnifer.svg?dataurl"
@@ -73,6 +73,7 @@
   import ShopMinimalistic from "@assets/icons/Shop Minimalistic.svg?dataurl"
   import SmileCircle from "@assets/icons/Smile Circle.svg?dataurl"
   import SquareShareLine from "@assets/icons/Square Share Line.svg?dataurl"
+  import SortVertical from "@assets/icons/Sort Vertical.svg?dataurl"
   import TrashBin2 from "@assets/icons/Trash Bin 2.svg?dataurl"
   import UFO3 from "@assets/icons/UFO 3.svg?dataurl"
   import UserHeart from "@assets/icons/User Heart.svg?dataurl"
@@ -82,8 +83,15 @@
   import WidgetAdd from "@assets/icons/Widget Add.svg?dataurl"
   import WiFiRouterRound from "@assets/icons/Wi-Fi Router Round.svg?dataurl"
 
-  export let icon
-  export let size = 5
+  const {
+    icon,
+    size = 5,
+    ...restProps
+  }: {
+    icon: string
+    size?: number
+    class?: string
+  } = $props()
 
   const px = size * 4
 
@@ -132,6 +140,7 @@
     letter: Letter,
     "link-round": LinkRound,
     login: Login,
+    lock: Lock,
     "login-2": Login2,
     magnifer: Magnifer,
     mailbox: Mailbox,
@@ -155,12 +164,13 @@
     "trash-bin-2": TrashBin2,
     "ufo-3": UFO3,
     "square-share-line": SquareShareLine,
+    "sort-vertical": SortVertical,
     "user-heart": UserHeart,
     "user-circle": UserCircle,
     "user-rounded": UserRounded,
     widget: Widget,
     "widget-add": WidgetAdd,
-    "wifi-router-round": WiFiRouterRound,
+    "wifi-router-round": WiFiRouterRound
   })
 
   if (!data) {
@@ -169,5 +179,6 @@
 </script>
 
 <div
-  class={cx("inline-block", $$props.class)}
-  style="mask-image: url({data}); width: {px}px; height: {px}px; min-width: {px}px; min-height: {px}px; background-color: currentcolor;" />
+  class="inline-block {restProps.class}"
+  style="mask-image: url({data}); width: {px}px; height: {px}px; min-width: {px}px; min-height: {px}px; background-color: currentcolor;"
+></div>

@@ -21,45 +21,38 @@
 </style>
 
 <script lang="ts">
-  import cx from "classnames"
   import {fade} from "@lib/transition"
   import {page} from "$app/stores"
 
-  export let href: string = ""
-  export let notification = false
+  const {children, href = "", notification = false, replaceState = false, ...restProps} = $props()
 
-  $: active = $page.url.pathname === href
+  const active = $derived($page.url.pathname === href)
 </script>
 
 {#if href}
   <a
-    {...$$props}
     {href}
-    on:click
-    class={cx(
-      $$props.class,
-      "hover:bg-base-100 hover:text-base-content relative flex items-center gap-3 text-left transition-all",
-    )}
+    {...restProps}
+    data-sveltekit-replacestate={replaceState}
+    class="{restProps.class} relative flex items-center gap-3 text-left transition-all hover:bg-base-100 hover:text-base-content"
     class:text-base-content={active}
-    class:bg-base-100={active}>
-    <slot />
+    class:bg-base-100={active}
+  >
+    {@render children?.()}
     {#if !active && notification}
-      <div class="bg-primary absolute right-2 top-5 h-2 w-2 rounded-full" transition:fade />
+      <div class="absolute right-2 top-5 h-2 w-2 rounded-full bg-primary" transition:fade></div>
     {/if}
   </a>
 {:else}
   <button
-    {...$$props}
-    on:click
-    class={cx(
-      $$props.class,
-      "hover:bg-base-100 hover:text-base-content relative flex w-full items-center gap-3 text-left transition-all",
-    )}
+    {...restProps}
+    class="{restProps.class} relative flex w-full items-center gap-3 text-left transition-all hover:bg-base-100 hover:text-base-content"
     class:text-base-content={active}
-    class:bg-base-100={active}>
+    class:bg-base-100={active}
+  >
     {#if !active && notification}
-      <div class="bg-primary absolute right-2 top-5 h-2 w-2 rounded-full" transition:fade />
+      <div class="absolute right-2 top-5 h-2 w-2 rounded-full bg-primary" transition:fade></div>
     {/if}
-    <slot />
+    {@render children?.()}
   </button>
 {/if}

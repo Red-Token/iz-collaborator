@@ -1,60 +1,63 @@
 <script lang="ts">
-  import {onMount} from "svelte"
-  import type {Readable} from "svelte/store"
-  import {createEditor, type Editor, EditorContent} from "svelte-tiptap"
-  import {isMobile} from "@lib/html"
+  import {writable} from "svelte/store"
+  import {isMobile, preventDefault} from "@lib/html"
   import Icon from "@lib/components/Icon.svelte"
   import Button from "@lib/components/Button.svelte"
-  import {getEditorOptions, getEditorTags} from "@lib/editor"
-  import {getPubkeyHints} from "@app/commands"
+  import EditorContent from "@app/editor/EditorContent.svelte"
+  import {makeEditor} from "@app/editor"
 
-  export let onSubmit
-  export let content = ""
-
-  let editor: Readable<Editor>
-
-  const submit = () => {
-    if ($loading) return
-
-    onSubmit({
-      content: $editor.getText({blockSeparator: "\n"}),
-      tags: getEditorTags($editor),
-    })
-
-    $editor.chain().clearContent().run()
+  interface Props {
+    onSubmit: any
   }
 
-  $: loading = $editor?.storage.fileUpload.loading
+  const {onSubmit}: Props = $props()
 
-  onMount(() => {
-    editor = createEditor(
-      getEditorOptions({
-        submit,
-        getPubkeyHints,
-        submitOnEnter: true,
-        autofocus: !isMobile,
-      }),
-    )
+  const autofocus = !isMobile
 
-    $editor.commands.setContent(content)
-  })
+  const uploading = writable(false)
+
+  export const focus = () => editor.chain().focus().run()
+
+  const uploadFiles = () => editor.chain().selectFiles().run()
+
+  const submit = () => {
+    if ($uploading) return
+
+    const content = editor.getText({blockSeparator: "\n"}).trim()
+    const tags = editor.storage.nostr.getEditorTags()
+
+    if (!content) return
+
+    onSubmit({content, tags})
+
+    editor.chain().clearContent().run()
+  }
+
+  const editor = makeEditor({autofocus, submit, uploading, aggressive: true})
 </script>
 
-<form
-  class="relative z-feature flex gap-2 p-2"
-  on:submit|preventDefault={$loading ? undefined : submit}>
+<form class="relative z-feature flex gap-2 p-2" onsubmit={preventDefault(submit)}>
   <Button
     data-tip="Add an image"
-    class="center tooltip tooltip-right rounded-box bg-base-300 hover:bg-base-200 h-10 w-10 min-w-10 transition-colors"
-    disabled={$loading}
-    on:click={$editor.commands.selectFiles}>
-    {#if $loading}
+    class="center tooltip tooltip-right h-10 w-10 min-w-10 rounded-box bg-base-300 transition-colors hover:bg-base-200"
+    disabled={$uploading}
+    onclick={uploadFiles}
+  >
+    {#if $uploading}
       <span class="loading loading-spinner loading-xs"></span>
     {:else}
       <Icon icon="gallery-send" />
     {/if}
   </Button>
   <div class="chat-editor flex-grow overflow-hidden">
-    <EditorContent editor={$editor} />
+    <EditorContent {editor} />
   </div>
+  <Button
+    data-tip="{window.navigator.platform.includes('Mac') ? 'cmd' : 'ctrl'}+enter to send"
+    class="center tooltip tooltip-left absolute right-4 h-10 w-10 min-w-10 rounded-full"
+    disabled={$uploading}
+    onclick={submit}
+  >
+    <Icon icon="plain" />
+  </Button>
 </form>

@@ -3,11 +3,12 @@
   import {publishDelete} from "@app/commands"
   import {clearModals} from "@app/modal"
 
-  export let url
-  export let event
+  const {url, event} = $props()
 
   const confirm = async () => {
-    await publishDelete({event, relays: [url]})
+    const snapshot = $state.snapshot(event)
+
+    await publishDelete({event: snapshot, relays: [url]})
 
     clearModals()
   }
@@ -17,4 +18,5 @@
   {confirm}
   title="Delete Message"
   subtitle="Are you sure you want to delete this message?"
-  message="This will send a request to delete this message. Be aware that not all relays may honor this request." />
+  message="This will send a request to delete this message. Be aware that not all relays may honor this request."
+/>

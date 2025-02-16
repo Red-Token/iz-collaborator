@@ -1,85 +1,109 @@
-import {writable, derived} from "svelte/store"
-import {page} from "$app/stores"
-import {deriveEvents} from "@welshman/store"
-import {repository, pubkey} from "@welshman/app"
-import {prop, max, sortBy, assoc, lt, now} from "@welshman/lib"
-import type {Filter, TrustedEvent} from "@welshman/util"
-import {DIRECT_MESSAGE} from "@welshman/util"
-import {makeSpacePath} from "@app/routes"
-import {
-  MESSAGE,
-  THREAD,
-  COMMENT,
-  deriveEventsForUrl,
-  getMembershipUrls,
-  userMembership,
-} from "@app/state"
+import {derived} from "svelte/store"
+import {synced, throttled} from "@welshman/store"
+import {pubkey} from "@welshman/app"
+import {prop, spec, identity, now, groupBy} from "@welshman/lib"
+import type {TrustedEvent} from "@welshman/util"
+import {EVENT_TIME, MESSAGE, THREAD, COMMENT, getTagValue} from "@welshman/util"
+import {makeSpacePath, makeChatPath, makeThreadPath, makeCalendarPath, makeRoomPath} from "@app/routes"
+import {chats, getUrlsForEvent, userRoomsByUrl, repositoryStore} from "@app/state"
 
 // Checked state
 
-export const checked = writable<Record<string, number>>({})
+export const checked = synced<Record<string, number>>("checked", {})
 
 export const deriveChecked = (key: string) => derived(checked, prop(key))
 
-export const setChecked = (key: string, ts = now()) =>
-  checked.update(state => ({...state, [key]: ts}))
+export const setChecked = (key: string) => checked.update(state => ({...state, [key]: now()}))
 
-// Filters for various routes
+// Derived notifications state
 
-export const CHAT_FILTERS: Filter[] = [{kinds: [DIRECT_MESSAGE]}]
+export const notifications = derived(
+  throttled(1000, derived([pubkey, checked, chats, userRoomsByUrl, repositoryStore, getUrlsForEvent], identity)),
+  ([$pubkey, $checked, $chats, $userRoomsByUrl, $repository, $getUrlsForEvent]) => {
+    const hasNotification = (path: string, latestEvent: TrustedEvent | undefined) => {
+      if (!latestEvent || latestEvent.pubkey === $pubkey) {
+        return false
+      }
 
-export const SPACE_FILTERS: Filter[] = [{kinds: [THREAD, MESSAGE, COMMENT]}]
+      for (const [entryPath, ts] of Object.entries($checked)) {
+        const isMatch =
+          entryPath === "*" || entryPath.startsWith(path) || (entryPath === "/chat/*" && path.startsWith("/chat/"))
 
-export const ROOM_FILTERS: Filter[] = [{kinds: [MESSAGE]}]
+        if (isMatch && ts > latestEvent.created_at) {
+          return false
+        }
+      }
 
-export const THREAD_FILTERS: Filter[] = [
-  {kinds: [THREAD]},
-  {kinds: [COMMENT], "#K": [String(THREAD)]},
-]
+      return true
+    }
 
-export const getNotificationFilters = (since: number): Filter[] =>
-  [...CHAT_FILTERS, ...SPACE_FILTERS, ...THREAD_FILTERS].map(assoc("since", since))
+    const paths = new Set<string>()
 
-export const getRoomFilters = (room: string): Filter[] => ROOM_FILTERS.map(assoc("#~", [room]))
+    for (const {pubkeys, messages} of $chats) {
+      const chatPath = makeChatPath(pubkeys)
 
-// Notification derivation
+      if (hasNotification(chatPath, messages[0])) {
+        paths.add("/chat")
+        paths.add(chatPath)
+      }
+    }
 
-export const getNotification = (
-  pubkey: string | null,
-  lastChecked: number,
-  events: TrustedEvent[],
-) => {
-  const [latestEvent] = sortBy($e => -$e.created_at, events)
+    const allThreadEvents = $repository.query([{kinds: [THREAD]}, {kinds: [COMMENT], "#K": [String(THREAD)]}])
 
-  return latestEvent?.pubkey !== pubkey && lt(lastChecked, latestEvent?.created_at)
-}
+    const allCalendarEvents = $repository.query([{kinds: [EVENT_TIME]}, {kinds: [COMMENT], "#K": [String(EVENT_TIME)]}])
 
-export const deriveNotification = (path: string, filters: Filter[], url?: string) => {
-  const events = url ? deriveEventsForUrl(url, filters) : deriveEvents(repository, {filters})
+    const allMessageEvents = $repository.query([{kinds: [MESSAGE]}])
 
-  return derived(
-    [pubkey, deriveChecked("*"), deriveChecked(path), events],
-    ([$pubkey, $allChecked, $checked, $events]) => {
-      return getNotification($pubkey, max([$allChecked, $checked]), $events)
-    },
-  )
-}
+    for (const [url, rooms] of $userRoomsByUrl.entries()) {
+      const spacePath = makeSpacePath(url)
+      const threadPath = makeThreadPath(url)
+      const calendarPath = makeCalendarPath(url)
+      const threadEvents = allThreadEvents.filter(e => $getUrlsForEvent(e.id).includes(url))
+      const calendarEvents = allCalendarEvents.filter(e => $getUrlsForEvent(e.id).includes(url))
 
-export const spacesNotifications = derived(
-  [pubkey, checked, userMembership, deriveEvents(repository, {filters: SPACE_FILTERS})],
-  ([$pubkey, $checked, $userMembership, $events]) => {
-    return getMembershipUrls($userMembership).filter(url => {
-      const path = makeSpacePath(url)
-      const lastChecked = max([$checked["*"], $checked[path]])
-      const [latestEvent] = sortBy($e => -$e.created_at, $events)
+      if (hasNotification(threadPath, threadEvents[0])) {
+        paths.add(spacePath)
+        paths.add(threadPath)
+      }
 
-      return latestEvent?.pubkey !== $pubkey && lt(lastChecked, latestEvent?.created_at)
-    })
-  },
-)
+      if (hasNotification(calendarPath, calendarEvents[0])) {
+        paths.add(spacePath)
+        paths.add(calendarPath)
+      }
 
-export const inactiveSpacesNotifications = derived(
-  [page, spacesNotifications],
-  ([$page, $spacesNotifications]) =>
-    $spacesNotifications.filter(url => !$page.url.pathname.startsWith(makeSpacePath(url))),
+      const commentsByThreadId = groupBy(e => getTagValue("E", e.tags), threadEvents.filter(spec({kind: COMMENT})))
+
+      for (const [threadId, [comment]] of commentsByThreadId.entries()) {
+        const threadItemPath = makeThreadPath(url, threadId)
+
+        if (hasNotification(threadItemPath, comment)) {
+          paths.add(threadItemPath)
+        }
+      }
+
+      const commentsByEventId = groupBy(e => getTagValue("E", e.tags), calendarEvents.filter(spec({kind: COMMENT})))
+
+      for (const [eventId, [comment]] of commentsByEventId.entries()) {
+        const calendarEventPath = makeCalendarPath(url, eventId)
+
+        if (hasNotification(calendarEventPath, comment)) {
+          paths.add(calendarEventPath)
+        }
+      }
+
+      for (const room of rooms) {
+        const roomPath = makeRoomPath(url, room)
+        const latestEvent = allMessageEvents.find(
+          e => $getUrlsForEvent(e.id).includes(url) && e.tags.find(t => t[0] === "h" && t[1] === room)
+        )
+
+        if (hasNotification(roomPath, latestEvent)) {
+          paths.add(spacePath)
+          paths.add(roomPath)
+        }
+      }
+    }
+
+    return paths
+  }
 )

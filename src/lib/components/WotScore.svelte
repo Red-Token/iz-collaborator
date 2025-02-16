@@ -16,29 +16,26 @@
 <script lang="ts">
   import {clamp} from "@welshman/lib"
 
-  export let score
-  export let max = 100
-  export let active = false
+  interface Props {
+    score: any
+    max?: number
+    active?: boolean
+  }
+
+  const {score, max = 100, active = false}: Props = $props()
 
   const radius = 6
   const center = radius + 1
 
-  $: normalizedScore = clamp([0, max], score) / max
-  $: dashOffset = 100 - 44 * normalizedScore
-  $: style = `transform: rotate(${135 - normalizedScore * 180}deg)`
-  $: stroke = active ? "var(--primary)" : "var(--base-content)"
+  const normalizedScore = $derived(clamp([0, max], score) / max)
+  const dashOffset = $derived(100 - 44 * normalizedScore)
+  const style = $derived(`transform: rotate(${135 - normalizedScore * 180}deg)`)
+  const stroke = $derived(active ? "var(--primary)" : "var(--base-content)")
 </script>
 
 <div class="relative h-[14px] w-[14px]">
   <svg height="14" width="14" class="absolute">
     <circle class="wot-background" cx={center} cy={center} r={radius} />
-    <circle
-      cx={center}
-      cy={center}
-      r={radius}
-      class="wot-highlight"
-      stroke-dashoffset={dashOffset}
-      {style}
-      {stroke} />
+    <circle cx={center} cy={center} r={radius} class="wot-highlight" stroke-dashoffset={dashOffset} {style} {stroke} />
   </svg>
 </div>

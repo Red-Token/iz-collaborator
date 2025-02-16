@@ -1,6 +1,6 @@
 <script lang="ts">
   import {onMount} from "svelte"
-  import {displayRelayUrl} from "@welshman/util"
+  import {displayRelayUrl, GROUP_META} from "@welshman/util"
   import {fly} from "@lib/transition"
   import Icon from "@lib/components/Icon.svelte"
   import Button from "@lib/components/Button.svelte"
@@ -14,23 +14,18 @@
   import ProfileList from "@app/components/ProfileList.svelte"
   import RoomCreate from "@app/components/RoomCreate.svelte"
   import MenuSpaceRoomItem from "@app/components/MenuSpaceRoomItem.svelte"
-  import {
-    getMembershipRoomsByUrl,
-    getMembershipUrls,
-    hasMembershipUrl,
-    userMembership,
-    memberships,
-    roomsByUrl,
-    GENERAL,
-  } from "@app/state"
-  import {deriveNotification, THREAD_FILTERS} from "@app/notifications"
+  import {userRoomsByUrl, hasMembershipUrl, memberships, deriveUserRooms, deriveOtherRooms} from "@app/state"
+  import {notifications} from "@app/notifications"
+  import {pullConservatively} from "@app/requests"
   import {pushModal} from "@app/modal"
   import {makeSpacePath} from "@app/routes"
 
-  export let url
+  const {url} = $props()
 
   const threadsPath = makeSpacePath(url, "threads")
-  const threadsNotification = deriveNotification(threadsPath, THREAD_FILTERS, url)
+  const calendarPath = makeSpacePath(url, "calendar")
+  const userRooms = deriveUserRooms(url)
+  const otherRooms = deriveOtherRooms(url)
 
   const openMenu = () => {
     showMenu = true
@@ -41,11 +36,7 @@
   }
 
   const showMembers = () =>
-    pushModal(
-      ProfileList,
-      {pubkeys: members, title: `Members of`, subtitle: displayRelayUrl(url)},
-      {replaceState},
-    )
+    pushModal(ProfileList, {pubkeys: members, title: `Members of`, subtitle: displayRelayUrl(url)}, {replaceState})
 
   const createInvite = () => pushModal(SpaceInvite, {url}, {replaceState})
 
@@ -55,51 +46,48 @@
 
   const addRoom = () => pushModal(RoomCreate, {url}, {replaceState})
 
-  let showMenu = false
-  let replaceState = false
-  let element: Element
+  let showMenu = $state(false)
+  let replaceState = $state(false)
+  let element: Element | undefined = $state()
 
-  $: rooms = getMembershipRoomsByUrl(url, $userMembership)
-  $: otherRooms = ($roomsByUrl.get(url) || []).filter(room => !rooms.concat(GENERAL).includes(room))
-  $: members = $memberships.filter(l => hasMembershipUrl(l, url)).map(l => l.event.pubkey)
+  const members = $derived($memberships.filter(l => hasMembershipUrl(l, url)).map(l => l.event.pubkey))
 
-  onMount(async () => {
-    replaceState = Boolean(element.closest(".drawer"))
+  onMount(() => {
+    replaceState = Boolean(element?.closest(".drawer"))
+    pullConservatively({relays: [url], filters: [{kinds: [GROUP_META]}]})
   })
 </script>
 
 <div bind:this={element}>
-  <SecondaryNavSection>
+  <SecondaryNavSection class="max-h-screen">
     <div>
-      <SecondaryNavItem class="w-full !justify-between" on:click={openMenu}>
-        <strong>{displayRelayUrl(url)}</strong>
+      <SecondaryNavItem class="w-full !justify-between" onclick={openMenu}>
+        <strong class="ellipsize">{displayRelayUrl(url)}</strong>
         <Icon icon="alt-arrow-down" />
       </SecondaryNavItem>
       {#if showMenu}
         <Popover hideOnClick onClose={toggleMenu}>
-          <ul
-            transition:fly
-            class="menu rounded-box bg-base-100 absolute z-popover mt-2 w-full p-2 shadow-xl">
+          <ul transition:fly class="menu absolute z-popover mt-2 w-full rounded-box bg-base-100 p-2 shadow-xl">
             <li>
-              <Button on:click={showMembers}>
+              <Button onclick={showMembers}>
                 <Icon icon="user-rounded" />
                 View Members ({members.length})
               </Button>
             </li>
             <li>
-              <Button on:click={createInvite}>
+              <Button onclick={createInvite}>
                 <Icon icon="link-round" />
                 Create Invite
               </Button>
             </li>
             <li>
-              {#if getMembershipUrls($userMembership).includes(url)}
-                <Button on:click={leaveSpace} class="text-error">
+              {#if $userRoomsByUrl.has(url)}
+                <Button onclick={leaveSpace} class="text-error">
                   <Icon icon="exit" />
                   Leave Space
                 </Button>
               {:else}
-                <Button on:click={joinSpace}>
+                <Button onclick={joinSpace} class="bg-primary text-primary-content">
                   <Icon icon="login-2" />
                   Join Space
                 </Button>
@@ -109,37 +97,38 @@
         </Popover>
       {/if}
     </div>
-    <SecondaryNavItem href={makeSpacePath(url)}>
-      <Icon icon="home-smile" /> Home
-    </SecondaryNavItem>
-    <SecondaryNavItem href={threadsPath} notification={$threadsNotification}>
-      <Icon icon="notes-minimalistic" /> Threads
-    </SecondaryNavItem>
-    <div class="h-2" />
-    <SecondaryNavHeader>Your Rooms</SecondaryNavHeader>
-    <MenuSpaceRoomItem {url} room={GENERAL} />
-    {#each rooms as room, i (room)}
-      <MenuSpaceRoomItem {url} {room} />
-    {/each}
-    {#if otherRooms.length > 0}
-      <div class="h-2" />
-      <SecondaryNavHeader>
-        {#if rooms.length > 0}
-          Other Rooms
-        {:else}
-          Rooms
-        {/if}
-      </SecondaryNavHeader>
-    {/if}
-    {#each otherRooms as room, i (room)}
-      <SecondaryNavItem href={makeSpacePath(url, room)}>
-        <Icon icon="hashtag" />
-        {room}
+    <div class="flex min-h-0 flex-col gap-1 overflow-auto">
+      <SecondaryNavItem {replaceState} href={makeSpacePath(url)}>
+        <Icon icon="home-smile" /> Home
       </SecondaryNavItem>
-    {/each}
-    <SecondaryNavItem on:click={addRoom}>
-      <Icon icon="add-circle" />
-      Create room
-    </SecondaryNavItem>
+      <SecondaryNavItem {replaceState} href={threadsPath} notification={$notifications.has(threadsPath)}>
+        <Icon icon="notes-minimalistic" /> Threads
+      </SecondaryNavItem>
+      <SecondaryNavItem {replaceState} href={calendarPath} notification={$notifications.has(calendarPath)}>
+        <Icon icon="calendar-minimalistic" /> Calendar
+      </SecondaryNavItem>
+      <div class="h-2"></div>
+      <SecondaryNavHeader>Your Rooms</SecondaryNavHeader>
+      {#each $userRooms as room, i (room)}
+        <MenuSpaceRoomItem {replaceState} notify {url} {room} />
+      {/each}
+      {#if $otherRooms.length > 0}
+        <div class="h-2"></div>
+        <SecondaryNavHeader>
+          {#if $userRooms.length > 0}
+            Other Rooms
+          {:else}
+            Rooms
+          {/if}
+        </SecondaryNavHeader>
+      {/if}
+      {#each $otherRooms as room, i (room)}
+        <MenuSpaceRoomItem {replaceState} {url} {room} />
+      {/each}
+      <SecondaryNavItem {replaceState} onclick={addRoom}>
+        <Icon icon="add-circle" />
+        Create room
+      </SecondaryNavItem>
+    </div>
   </SecondaryNavSection>
 </div>

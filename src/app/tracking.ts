@@ -7,7 +7,7 @@ export const setupTracking = () => {
       tracesSampleRate: 0.01,
       integrations(integrations) {
         return integrations.filter(integration => integration.name !== "Breadcrumbs")
-      },
+      }
     })
   }
 }

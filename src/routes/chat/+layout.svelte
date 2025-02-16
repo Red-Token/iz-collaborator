@@ -1,9 +1,8 @@
 <script lang="ts">
-  import {onMount} from "svelte"
+  import {page} from "$app/stores"
   import {ctx} from "@welshman/lib"
   import {WRAP} from "@welshman/util"
-  import type {TrustedEvent} from "@welshman/util"
-  import {pubkey, repository} from "@welshman/app"
+  import {pubkey} from "@welshman/app"
   import Icon from "@lib/components/Icon.svelte"
   import Page from "@lib/components/Page.svelte"
   import Button from "@lib/components/Button.svelte"
@@ -13,40 +12,32 @@
   import SecondaryNavSection from "@lib/components/SecondaryNavSection.svelte"
   import ChatStart from "@app/components/ChatStart.svelte"
   import ChatItem from "@app/components/ChatItem.svelte"
-  import {chatSearch, pullConservatively, ensureUnwrapped} from "@app/state"
+  import {chatSearch} from "@app/state"
+  import {pullConservatively} from "@app/requests"
   import {pushModal} from "@app/modal"
+  interface Props {
+    children?: import("svelte").Snippet
+  }
+
+  const {children}: Props = $props()
 
   const startChat = () => pushModal(ChatStart)
 
   const promise = pullConservatively({
     filters: [{kinds: [WRAP], "#p": [$pubkey!]}],
-    relays: ctx.app.router.UserInbox().getUrls(),
+    relays: ctx.app.router.UserInbox().getUrls()
   })
 
-  const onUpdate = ({added}: {added: TrustedEvent[]}) => {
-    for (const event of added) {
-      ensureUnwrapped(event)
-    }
-  }
+  let term = $state("")
 
-  let term = ""
-
-  $: chats = $chatSearch.searchOptions(term).filter(c => c.pubkeys.length > 1)
-
-  onMount(() => {
-    repository.on("update", onUpdate)
-
-    return () => {
-      repository.off("update", onUpdate)
-    }
-  })
+  const chats = $derived($chatSearch.searchOptions(term))
 </script>
 
 <SecondaryNav>
   <SecondaryNavSection>
     <SecondaryNavHeader>
       Chats
-      <Button on:click={startChat}>
+      <Button onclick={startChat}>
         <Icon icon="add-circle" />
       </Button>
     </SecondaryNavHeader>
@@ -60,12 +51,14 @@
       <ChatItem {id} {pubkeys} {messages} />
     {/each}
     {#await promise}
-      <div class="border-base-100 border-t border-solid px-6 py-4 text-xs">
+      <div class="border-t border-solid border-base-100 px-6 py-4 text-xs">
         <Spinner loading>Loading conversations...</Spinner>
       </div>
     {/await}
   </div>
 </SecondaryNav>
 <Page>
-  <slot />
+  {#key $page.url.pathname}
+    {@render children?.()}
+  {/key}
 </Page>

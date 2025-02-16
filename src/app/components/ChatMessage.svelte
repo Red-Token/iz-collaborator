@@ -2,34 +2,34 @@
   import {type Instance} from "tippy.js"
   import {hash} from "@welshman/lib"
   import type {TrustedEvent} from "@welshman/util"
-  import {
-    thunks,
-    deriveProfile,
-    deriveProfileDisplay,
-    formatTimestampAsTime,
-    pubkey,
-  } from "@welshman/app"
+  import {thunks, deriveProfile, deriveProfileDisplay, formatTimestampAsTime, pubkey} from "@welshman/app"
   import {isMobile} from "@lib/html"
   import Icon from "@lib/components/Icon.svelte"
-  import Link from "@lib/components/Link.svelte"
+  import Button from "@lib/components/Button.svelte"
   import Tippy from "@lib/components/Tippy.svelte"
   import LongPress from "@lib/components/LongPress.svelte"
   import Avatar from "@lib/components/Avatar.svelte"
   import Content from "@app/components/Content.svelte"
-  import ReplySummary from "@app/components/ReplySummary.svelte"
   import ReactionSummary from "@app/components/ReactionSummary.svelte"
   import ThunkStatus from "@app/components/ThunkStatus.svelte"
+  import ProfileDetail from "@app/components/ProfileDetail.svelte"
   import ChatMessageMenu from "@app/components/ChatMessageMenu.svelte"
   import ChatMessageMenuMobile from "@app/components/ChatMessageMenuMobile.svelte"
-  import {colors, pubkeyLink} from "@app/state"
+  import {colors} from "@app/state"
   import {makeDelete, makeReaction, sendWrapped} from "@app/commands"
   import {pushModal} from "@app/modal"
 
-  export let event: TrustedEvent
-  export let pubkeys: string[]
-  export let showPubkey = false
+  interface Props {
+    event: TrustedEvent
+    replyTo?: any
+    pubkeys: string[]
+    showPubkey?: boolean
+  }
+
+  const {event, replyTo = undefined, pubkeys, showPubkey = false}: Props = $props()
 
   const thunk = $thunks[event.id]
+  const isOwn = event.pubkey === $pubkey
   const profile = deriveProfile(event.pubkey)
   const profileDisplay = deriveProfileDisplay(event.pubkey)
   const [_, colorValue] = colors[parseInt(hash(event.pubkey)) % colors.length]
@@ -41,32 +41,36 @@
     await sendWrapped({template, pubkeys})
   }
 
+  const openProfile = () => pushModal(ProfileDetail, {pubkey: event.pubkey})
+
   const showMobileMenu = () => pushModal(ChatMessageMenuMobile, {event, pubkeys})
 
   const togglePopover = () => {
     if (popoverIsVisible) {
-      popover.hide()
+      popover?.hide()
     } else {
-      popover.show()
+      popover?.show()
     }
   }
 
-  let popover: Instance
-  let popoverIsVisible = false
+  let popover: Instance | undefined = $state()
+  let popoverIsVisible = $state(false)
 </script>
 
 {#if thunk}
   <ThunkStatus {thunk} class="mt-1" />
 {/if}
 <div
-  class="chat group flex items-center justify-end gap-1 px-2"
-  class:chat-start={event.pubkey !== $pubkey}
-  class:flex-row-reverse={event.pubkey !== $pubkey}
-  class:chat-end={event.pubkey === $pubkey}>
+  data-event={event.id}
+  class="group chat flex items-center justify-end gap-1 px-2"
+  class:chat-start={!isOwn}
+  class:flex-row-reverse={!isOwn}
+  class:chat-end={isOwn}
+>
   <Tippy
     bind:popover
     component={ChatMessageMenu}
-    props={{event, pubkeys, popover}}
+    props={{event, pubkeys, popover, replyTo}}
     params={{
       interactive: true,
       trigger: "manual",
@@ -75,38 +79,36 @@
       },
       onHidden() {
         popoverIsVisible = false
-      },
-    }}>
+      }
+    }}
+  >
     <button
       type="button"
       class="opacity-0 transition-all"
       class:group-hover:opacity-100={!isMobile}
-      on:click={togglePopover}>
+      onclick={togglePopover}
+    >
       <Icon icon="menu-dots" size={4} />
     </button>
   </Tippy>
-  <div class="flex min-w-0 flex-col" class:items-end={event.pubkey === $pubkey}>
+  <div class="flex min-w-0 flex-col" class:items-end={isOwn}>
     <LongPress
       class="bg-alt chat-bubble mx-1 flex cursor-auto flex-col gap-1 text-left lg:max-w-2xl"
-      onLongPress={showMobileMenu}>
-      {#if showPubkey && event.pubkey !== $pubkey}
+      onLongPress={showMobileMenu}
+    >
+      {#if showPubkey}
         <div class="flex items-center gap-2">
-          <Link external href={pubkeyLink(event.pubkey)} class="flex items-center gap-1">
-            <Avatar
-              src={$profile?.picture}
-              class="border-base-content border border-solid"
-              size={4} />
-            <div class="flex items-center gap-2">
-              <Link
-                external
-                href={pubkeyLink(event.pubkey)}
-                class="text-sm font-bold"
-                style="color: {colorValue}">
-                {$profileDisplay}
-              </Link>
-            </div>
-          </Link>
-          <span class="text-xs opacity-50">{formatTimestampAsTime(event.created_at)}</span>
+          {#if !isOwn}
+            <Button onclick={openProfile} class="flex items-center gap-1">
+              <Avatar src={$profile?.picture} class="border border-solid border-base-content" size={4} />
+              <div class="flex items-center gap-2">
+                <Button onclick={openProfile} class="text-sm font-bold" style="color: {colorValue}">
+                  {$profileDisplay}
+                </Button>
+              </div>
+            </Button>
+          {/if}
+          <span class="whitespace-nowrap text-xs opacity-50">{formatTimestampAsTime(event.created_at)}</span>
         </div>
       {/if}
       <div class="text-sm">
@@ -114,8 +116,7 @@
       </div>
     </LongPress>
     <div class="row-2 z-feature -mt-1 ml-4">
-      <ReplySummary {event} />
-      <ReactionSummary {event} {onReactionClick} />
+      <ReactionSummary {event} {onReactionClick} noTooltip />
     </div>
   </div>
 </div>
